@@ -107,23 +107,35 @@ async function runSingle(graphType: GraphType, contextTokens: number, scenarioId
 async function runResearch(): Promise<void> {
   console.log('\n🚀 FULL RESEARCH MODE: building parameter matrix...\n');
   const matrix = buildResearchMatrix();
+  const totalTurns = matrix.length * ALL_SCENARIOS.reduce((s, sc) => s + sc.turns.length, 0);
   console.log(`Total configurations: ${matrix.length}`);
   console.log(`Total scenarios: ${ALL_SCENARIOS.length}`);
-  console.log(`Estimated turns: ${matrix.length * ALL_SCENARIOS.reduce((s, sc) => s + sc.turns.length, 0)}\n`);
+  console.log(`Estimated turns: ${totalTurns}\n`);
 
   const runner = new TestRunner(true);
   const reporter = new MarkdownReporter(OUTPUT_DIR);
+  const allResults: import('./harness/runner').RunResult[] = [];
 
-  const allResults = await runner.runMatrix(matrix, ALL_SCENARIOS);
+  for (let i = 0; i < matrix.length; i++) {
+    const config = matrix[i];
+    console.log(`\n[${i + 1}/${matrix.length}] Running config: ${config.runLabel}`);
+    const result = await runner.runConfig(config, ALL_SCENARIOS);
+    allResults.push(result);
 
-  // Write individual reports
-  for (const result of allResults) {
-    reporter.writeRunReport(result);
+    // Write each config report immediately (resilient to crashes)
+    const reportPath = reporter.writeRunReport(result);
+    console.log(`  💾 Saved: ${reportPath}`);
+
+    // Write rolling summary after every 4 configs or at the end
+    if ((i + 1) % 4 === 0 || i === matrix.length - 1) {
+      reporter.writeSummaryReport(allResults, 'research_progress.md');
+      console.log(`  📊 Rolling summary updated (${allResults.length}/${matrix.length} configs complete)`);
+    }
   }
 
-  // Write summary
-  const summaryPath = reporter.writeSummaryReport(allResults, `research_summary_${Date.now()}.md`);
-  console.log(`\n📋 Summary written: ${summaryPath}`);
+  // Write final summary
+  const summaryPath = reporter.writeSummaryReport(allResults, 'research_summary_final.md');
+  console.log(`\n📋 Final summary written: ${summaryPath}`);
 
   const best = allResults.reduce((b, r) => r.avgKeywordAccuracy > b.avgKeywordAccuracy ? r : b, allResults[0]);
   console.log(`\n🏆 Best configuration: ${best.runLabel} — ${(best.avgKeywordAccuracy * 100).toFixed(1)}%`);

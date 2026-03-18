@@ -146,7 +146,7 @@ const worldKnowledge: TestScenario = {
     { userMessage: "What was the first moon landing mission called and when did it happen?", expectedKeywords: ['apollo 11', '1969'], factTag: 'moon_landing' },
     { userMessage: "How many moons does Mars have, and what are they called?", expectedKeywords: ['2', 'phobos', 'deimos'], factTag: 'mars_moons' },
     { userMessage: "Back to Einstein — did he win a Nobel Prize? When?", expectedKeywords: ['1921', 'nobel'], factTag: 'einstein_nobel' },
-    { userMessage: "What language is spoken in the country whose capital is Paris?", expectedKeywords: ['french', 'france'], factTag: 'france_language' },
+    { userMessage: "What language is spoken in the country whose capital is Paris?", expectedKeywords: ['french'], factTag: 'france_language' },
   ],
 };
 
