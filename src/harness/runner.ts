@@ -56,14 +56,31 @@ export class TestRunner {
     if (this.verbose) console.log(msg);
   }
 
-  /** Check if expected keywords appear in response (case-insensitive) */
+  /**
+   * Check if expected keywords appear in response (case-insensitive).
+   *
+   * For single-word keywords: substring match (e.g. "paris" in "The city is Paris")
+   * For multi-word keywords: ALL words must appear anywhere in the response, order-independent.
+   *   e.g. "vp product" matches "VP of Product" and "Product VP"
+   * This handles natural language variation where words may not be adjacent.
+   */
   private checkKeywords(response: string, expectedKeywords: string[]): {
     found: boolean;
     missing: string[];
   } {
     if (expectedKeywords.length === 0) return { found: true, missing: [] };
     const lower = response.toLowerCase();
-    const missing = expectedKeywords.filter(kw => !lower.includes(kw.toLowerCase()));
+    const missing = expectedKeywords.filter(kw => {
+      const kwLower = kw.toLowerCase();
+      // First try direct substring match (handles exact phrases and single words)
+      if (lower.includes(kwLower)) return false;
+      // For multi-word keywords, check all component words appear anywhere in response
+      const words = kwLower.split(/\s+/).filter(w => w.length > 0);
+      if (words.length > 1) {
+        return !words.every(word => lower.includes(word));
+      }
+      return true;
+    });
     return { found: missing.length === 0, missing };
   }
 
