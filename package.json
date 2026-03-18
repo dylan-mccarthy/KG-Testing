@@ -1,0 +1,26 @@
+{
+  "name": "kg-testing",
+  "version": "1.0.0",
+  "description": "Knowledge Graph testing harness for AI Agent memory evaluation",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "test:quick": "ts-node src/index.ts --quick",
+    "research": "ts-node src/index.ts --research"
+  },
+  "keywords": ["knowledge-graph", "ai-agent", "ollama", "memory"],
+  "author": "dylan-mccarthy",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.3.0"
+  }
+}

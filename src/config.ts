@@ -1,0 +1,102 @@
+// Core configuration types and defaults for the KG testing harness
+
+export type GraphType = 'simple' | 'hierarchical' | 'multi' | 'weighted';
+
+export interface GraphConfig {
+  type: GraphType;
+  /** Max depth for hierarchical traversal (1-5) */
+  graphDepth: number;
+  /** Number of child nodes per parent in hierarchical graph (2-8) */
+  subTrees: number;
+  /** Enable multiple relationship types per node pair */
+  multiGraph: boolean;
+  /** Enable edge weights and relevance scoring */
+  weightedEdges: boolean;
+  /** Directed vs undirected edges */
+  directed: boolean;
+}
+
+export interface AgentConfig {
+  ollamaEndpoint: string;
+  model: string;
+  /** Max tokens kept in conversation context (forces KG use) */
+  maxContextTokens: number;
+  /** Number of KG search results injected per turn */
+  topK: number;
+  /** Temperature for generation */
+  temperature: number;
+  /** System prompt prefix */
+  systemPrompt?: string;
+}
+
+export interface RunConfig {
+  graph: GraphConfig;
+  agent: AgentConfig;
+  /** Max turns per test scenario */
+  maxTurns: number;
+  /** Output directory for results */
+  outputDir: string;
+  /** Run label for grouping results */
+  runLabel: string;
+}
+
+export const DEFAULT_GRAPH_CONFIG: GraphConfig = {
+  type: 'simple',
+  graphDepth: 3,
+  subTrees: 3,
+  multiGraph: false,
+  weightedEdges: false,
+  directed: false,
+};
+
+export const DEFAULT_AGENT_CONFIG: AgentConfig = {
+  ollamaEndpoint: 'http://192.168.86.27:11434',
+  model: 'qwen3.5:4b',
+  maxContextTokens: 800,
+  topK: 5,
+  temperature: 0.3,
+};
+
+export const DEFAULT_RUN_CONFIG: RunConfig = {
+  graph: DEFAULT_GRAPH_CONFIG,
+  agent: DEFAULT_AGENT_CONFIG,
+  maxTurns: 10,
+  outputDir: './results',
+  runLabel: 'default',
+};
+
+/** Build all parameter combinations for the research sweep */
+export function buildResearchMatrix(): RunConfig[] {
+  const configs: RunConfig[] = [];
+  const graphTypes: GraphType[] = ['simple', 'hierarchical', 'multi', 'weighted'];
+  const depths = [2, 4];
+  const subTrees = [2, 4];
+  const contextLimits = [400, 800, 1500];
+
+  for (const type of graphTypes) {
+    for (const depth of depths) {
+      for (const trees of subTrees) {
+        for (const maxCtx of contextLimits) {
+          configs.push({
+            graph: {
+              type,
+              graphDepth: depth,
+              subTrees: trees,
+              multiGraph: type === 'multi',
+              weightedEdges: type === 'weighted',
+              directed: type === 'hierarchical',
+            },
+            agent: {
+              ...DEFAULT_AGENT_CONFIG,
+              maxContextTokens: maxCtx,
+            },
+            maxTurns: 10,
+            outputDir: './results',
+            runLabel: `${type}_depth${depth}_trees${trees}_ctx${maxCtx}`,
+          });
+        }
+      }
+    }
+  }
+  return configs;
+}
