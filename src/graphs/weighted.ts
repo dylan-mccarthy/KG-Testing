@@ -57,7 +57,7 @@ export class WeightedGraph extends SimpleGraph {
 
   /** Search with relevance scoring boosted by edge weights */
   searchWeighted(query: string, topK = 5): SearchResult[] {
-    const initial = this.searchByLabel(query, topK * 3);
+    const initial = super.searchByLabel(query, topK * 3);
 
     // Boost score based on weighted connectivity
     for (const result of initial) {
