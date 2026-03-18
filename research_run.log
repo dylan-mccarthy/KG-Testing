@@ -2443,3 +2443,476 @@ Estimated turns: 2592
     Turn 10/12: "What's the name of Alex's daughter and where does she go to ..."
     ✅ [2871ms, 348 ctx tokens, 5 KG hits]
     Turn 11/12: "Going back to Alex — what company does he work for and what ..."
+    ✅ [1010ms, 341 ctx tokens, 5 KG hits]
+    Turn 12/12: "What does Alex order at a coffee shop?..."
+    ✅ [735ms, 335 ctx tokens, 5 KG hits]
+    ✓ Accuracy: 90.9% | Avg latency: 11327ms
+  📋 Scenario: World Knowledge Chain Reasoning
+    Graph loaded: 8 nodes, 5 edges
+    Turn 1/10: "What is the capital of France?..."
+    ✅ [1423ms, 237 ctx tokens, 4 KG hits]
+    Turn 2/10: "What famous structures is that city known for?..."
+    ✅ [1735ms, 341 ctx tokens, 6 KG hits]
+    Turn 3/10: "Albert Einstein — what country was he from originally?..."
+    ✅ [2782ms, 344 ctx tokens, 6 KG hits]
+    Turn 4/10: "What is Einstein most famous for scientifically?..."
+    ✅ [5833ms, 349 ctx tokens, 7 KG hits]
+    Turn 5/10: "Can you name a famous female scientist who won two Nobel Pri..."
+    ✅ [2993ms, 353 ctx tokens, 7 KG hits]
+    Turn 6/10: "How far is the Moon from Earth?..."
+    ✅ [2092ms, 321 ctx tokens, 5 KG hits]
+    Turn 7/10: "What was the first moon landing mission called and when did ..."
+    ✅ [838ms, 336 ctx tokens, 5 KG hits]
+    Turn 8/10: "How many moons does Mars have, and what are they called?..."
+    ✅ [1196ms, 344 ctx tokens, 5 KG hits]
+    Turn 9/10: "Back to Einstein — did he win a Nobel Prize? When?..."
+    ✅ [4895ms, 336 ctx tokens, 6 KG hits]
+    Turn 10/10: "What language is spoken in the country whose capital is Pari..."
+    ✅ [2745ms, 346 ctx tokens, 5 KG hits]
+    ✓ Accuracy: 100.0% | Avg latency: 2653ms
+  📋 Scenario: Organizational Entity Relations
+    Graph loaded: 8 nodes, 7 edges
+    Turn 1/10: "Who is the CEO of Acme Corp?..."
+    ✅ [1285ms, 220 ctx tokens, 4 KG hits]
+    Turn 2/10: "Who does Priya Sharma report to?..."
+    ❌ [2439ms, 327 ctx tokens, 6 KG hits]
+       Missing: ceo
+    Turn 3/10: "What is Marcus Lee's role at the company?..."
+    ✅ [3638ms, 321 ctx tokens, 5 KG hits]
+    Turn 4/10: "How long has the CEO been at Acme Corp?..."
+    ✅ [3321ms, 324 ctx tokens, 5 KG hits]
+    Turn 5/10: "Who manages the engineering team under the CTO?..."
+    ✅ [1418ms, 325 ctx tokens, 6 KG hits]
+    Turn 6/10: "Name the senior engineers and their teams...."
+    ✅ [1578ms, 336 ctx tokens, 6 KG hits]
+    Turn 7/10: "Who is responsible for product development reporting to the ..."
+    ✅ [2200ms, 324 ctx tokens, 5 KG hits]
+    Turn 8/10: "If I wanted to talk to someone about finances at Acme, who w..."
+    ❌ [28441ms, 324 ctx tokens, 4 KG hits]
+       Missing: marcus, lee
+    Turn 9/10: "What department does Aiko Tanaka work in?..."
+    ❌ [48791ms, 262 ctx tokens, 5 KG hits]
+       Missing: engineering, data
+    Turn 10/10: "What year was Acme Corp founded?..."
+    ✅ [1916ms, 350 ctx tokens, 4 KG hits]
+    ✓ Accuracy: 70.0% | Avg latency: 9503ms
+  📋 Scenario: Historical Timeline Recall
+    Graph loaded: 6 nodes, 5 edges
+    Turn 1/12: "When did Project Phoenix kick off?..."
+    ✅ [1599ms, 212 ctx tokens, 2 KG hits]
+    Turn 2/12: "What happened at the kickoff meeting?..."
+    ❌ [6549ms, 256 ctx tokens, 2 KG hits]
+       Missing: finalized
+    Turn 3/12: "When was the alpha version released?..."
+    ✅ [1026ms, 316 ctx tokens, 5 KG hits]
+    Turn 4/12: "How many bugs were found in the alpha?..."
+    ✅ [1848ms, 339 ctx tokens, 5 KG hits]
+    Turn 5/12: "What was the team size for the project?..."
+    ✅ [929ms, 350 ctx tokens, 6 KG hits]
+    Turn 6/12: "When did the beta launch happen and what version was it?..."
+    ✅ [953ms, 337 ctx tokens, 5 KG hits]
+    Turn 7/12: "How many external testers participated in beta?..."
+    ✅ [1092ms, 342 ctx tokens, 5 KG hits]
+    Turn 8/12: "What was the official production release date?..."
+    ✅ [3840ms, 338 ctx tokens, 5 KG hits]
+    Turn 9/12: "Who was the launch partner for the production release?..."
+    ✅ [1075ms, 339 ctx tokens, 5 KG hits]
+    Turn 10/12: "How quickly did the user base grow after launch?..."
+    ✅ [5534ms, 341 ctx tokens, 5 KG hits]
+    Turn 11/12: "What was the uptime percentage after launch?..."
+    ✅ [3361ms, 348 ctx tokens, 5 KG hits]
+    Turn 12/12: "From kickoff to production, roughly how many months did the ..."
+    ✅ [10926ms, 359 ctx tokens, 6 KG hits]
+    ✓ Accuracy: 91.7% | Avg latency: 3228ms
+  📋 Scenario: Multi-Hop Knowledge Retrieval
+    Graph loaded: 7 nodes, 6 edges
+    Turn 1/10: "What is the currency of Japan?..."
+    ✅ [1075ms, 247 ctx tokens, 4 KG hits]
+    Turn 2/10: "Which bank issues that currency?..."
+    ✅ [928ms, 288 ctx tokens, 4 KG hits]
+    Turn 3/10: "Where is the Bank of Japan located?..."
+    ✅ [979ms, 317 ctx tokens, 4 KG hits]
+    Turn 4/10: "Who created the Python programming language?..."
+    ✅ [727ms, 341 ctx tokens, 5 KG hits]
+    Turn 5/10: "What nationality is the creator of Python?..."
+    ✅ [891ms, 343 ctx tokens, 6 KG hits]
+    Turn 6/10: "Where did Guido van Rossum work as of 2020?..."
+    ✅ [1268ms, 357 ctx tokens, 7 KG hits]
+    Turn 7/10: "Who founded Microsoft?..."
+    ✅ [895ms, 344 ctx tokens, 6 KG hits]
+    Turn 8/10: "What is the GDP ranking of Japan globally?..."
+    ✅ [1003ms, 346 ctx tokens, 5 KG hits]
+    Turn 9/10: "When was the Japanese Yen introduced?..."
+    ✅ [820ms, 342 ctx tokens, 5 KG hits]
+    Turn 10/10: "What year was Python first released and what version is curr..."
+    ✅ [1009ms, 343 ctx tokens, 6 KG hits]
+    ✓ Accuracy: 100.0% | Avg latency: 960ms
+
+  📊 Run complete: 90.5% accuracy, 5534ms avg latency
+  💾 Saved: results/hierarchical_depth4_trees2_ctx400.md
+
+[20/48] Running config: hierarchical_depth4_trees2_ctx800
+
+🔬 Run: hierarchical_depth4_trees2_ctx800
+   Graph: hierarchical | Depth: 4 | Trees: 2 | Ctx: 800
+  📋 Scenario: Personal Profile Recall
+    Graph loaded: 5 nodes, 5 edges
+    Turn 1/12: "What is Alex Chen's job?..."
+    ✅ [1358ms, 289 ctx tokens, 4 KG hits]
+    Turn 2/12: "Tell me about the weather in Tokyo today...."
+    ➖ [17396ms, 264 ctx tokens, 4 KG hits]
+    Turn 3/12: "How old is Alex?..."
+    ✅ [705ms, 397 ctx tokens, 5 KG hits]
+    Turn 4/12: "What does Alex do in his free time?..."
+    ✅ [814ms, 421 ctx tokens, 5 KG hits]
+    Turn 5/12: "What is the capital of France? Just checking...."
+    ✅ [2586ms, 380 ctx tokens, 4 KG hits]
+    Turn 6/12: "Where does Alex's wife work?..."
+    ❌ [1917ms, 480 ctx tokens, 5 KG hits]
+       Missing: nurse
+    Turn 7/12: "Does Alex have any pets? What kind?..."
+    ✅ [5823ms, 513 ctx tokens, 5 KG hits]
+    Turn 8/12: "Quick math: what's 15 times 12?..."
+    ✅ [13789ms, 465 ctx tokens, 4 KG hits]
+    Turn 9/12: "What car does Alex drive?..."
+    ✅ [776ms, 562 ctx tokens, 5 KG hits]
+    Turn 10/12: "What's the name of Alex's daughter and where does she go to ..."
+    ✅ [750ms, 596 ctx tokens, 5 KG hits]
+    Turn 11/12: "Going back to Alex — what company does he work for and what ..."
+    ✅ [1816ms, 639 ctx tokens, 5 KG hits]
+    Turn 12/12: "What does Alex order at a coffee shop?..."
+    ✅ [1880ms, 678 ctx tokens, 5 KG hits]
+    ✓ Accuracy: 90.9% | Avg latency: 4134ms
+  📋 Scenario: World Knowledge Chain Reasoning
+    Graph loaded: 8 nodes, 5 edges
+    Turn 1/10: "What is the capital of France?..."
+    ✅ [1702ms, 237 ctx tokens, 4 KG hits]
+    Turn 2/10: "What famous structures is that city known for?..."
+    ✅ [1858ms, 341 ctx tokens, 6 KG hits]
+    Turn 3/10: "Albert Einstein — what country was he from originally?..."
+    ✅ [2834ms, 384 ctx tokens, 6 KG hits]
+    Turn 4/10: "What is Einstein most famous for scientifically?..."
+    ✅ [2548ms, 439 ctx tokens, 7 KG hits]
+    Turn 5/10: "Can you name a famous female scientist who won two Nobel Pri..."
+    ✅ [3676ms, 484 ctx tokens, 7 KG hits]
+    Turn 6/10: "How far is the Moon from Earth?..."
+    ✅ [1048ms, 452 ctx tokens, 5 KG hits]
+    Turn 7/10: "What was the first moon landing mission called and when did ..."
+    ✅ [2983ms, 490 ctx tokens, 5 KG hits]
+    Turn 8/10: "How many moons does Mars have, and what are they called?..."
+    ✅ [2131ms, 519 ctx tokens, 5 KG hits]
+    Turn 9/10: "Back to Einstein — did he win a Nobel Prize? When?..."
+    ✅ [4031ms, 595 ctx tokens, 6 KG hits]
+    Turn 10/10: "What language is spoken in the country whose capital is Pari..."
+    ✅ [8431ms, 587 ctx tokens, 5 KG hits]
+    ✓ Accuracy: 100.0% | Avg latency: 3124ms
+  📋 Scenario: Organizational Entity Relations
+    Graph loaded: 8 nodes, 7 edges
+    Turn 1/10: "Who is the CEO of Acme Corp?..."
+    ✅ [2321ms, 220 ctx tokens, 4 KG hits]
+    Turn 2/10: "Who does Priya Sharma report to?..."
+    ✅ [1045ms, 309 ctx tokens, 6 KG hits]
+    Turn 3/10: "What is Marcus Lee's role at the company?..."
+    ✅ [1139ms, 310 ctx tokens, 5 KG hits]
+    Turn 4/10: "How long has the CEO been at Acme Corp?..."
+    ✅ [819ms, 358 ctx tokens, 5 KG hits]
+    Turn 5/10: "Who manages the engineering team under the CTO?..."
+    ❌ [1495ms, 429 ctx tokens, 6 KG hits]
+       Missing: vp engineering
+    Turn 6/10: "Name the senior engineers and their teams...."
+    ✅ [4087ms, 473 ctx tokens, 6 KG hits]
+    Turn 7/10: "Who is responsible for product development reporting to the ..."
+    ❌ [3956ms, 491 ctx tokens, 5 KG hits]
+       Missing: vp product
+    Turn 8/10: "If I wanted to talk to someone about finances at Acme, who w..."
+    ❌ [52769ms, 507 ctx tokens, 4 KG hits]
+       Missing: marcus, lee, cfo
+    Turn 9/10: "What department does Aiko Tanaka work in?..."
+    ✅ [2207ms, 559 ctx tokens, 5 KG hits]
+    Turn 10/10: "What year was Acme Corp founded?..."
+    ✅ [1780ms, 601 ctx tokens, 4 KG hits]
+    ✓ Accuracy: 70.0% | Avg latency: 7162ms
+  📋 Scenario: Historical Timeline Recall
+    Graph loaded: 6 nodes, 5 edges
+    Turn 1/12: "When did Project Phoenix kick off?..."
+    ✅ [1134ms, 212 ctx tokens, 2 KG hits]
+    Turn 2/12: "What happened at the kickoff meeting?..."
+    ✅ [6078ms, 256 ctx tokens, 2 KG hits]
+    Turn 3/12: "When was the alpha version released?..."
+    ✅ [1041ms, 428 ctx tokens, 5 KG hits]
+    Turn 4/12: "How many bugs were found in the alpha?..."
+    ✅ [732ms, 464 ctx tokens, 5 KG hits]
+    Turn 5/12: "What was the team size for the project?..."
+    ✅ [912ms, 525 ctx tokens, 6 KG hits]
+    Turn 6/12: "When did the beta launch happen and what version was it?..."
+    ✅ [1052ms, 526 ctx tokens, 5 KG hits]
+    Turn 7/12: "How many external testers participated in beta?..."
+    ✅ [1164ms, 565 ctx tokens, 5 KG hits]
+    Turn 8/12: "What was the official production release date?..."
+    ✅ [1171ms, 599 ctx tokens, 5 KG hits]
+    Turn 9/12: "Who was the launch partner for the production release?..."
+    ✅ [912ms, 640 ctx tokens, 5 KG hits]
+    Turn 10/12: "How quickly did the user base grow after launch?..."
+    ✅ [960ms, 678 ctx tokens, 5 KG hits]
+    Turn 11/12: "What was the uptime percentage after launch?..."
+    ✅ [762ms, 710 ctx tokens, 5 KG hits]
+    Turn 12/12: "From kickoff to production, roughly how many months did the ..."
+    ✅ [5498ms, 739 ctx tokens, 6 KG hits]
+    ✓ Accuracy: 100.0% | Avg latency: 1785ms
+  📋 Scenario: Multi-Hop Knowledge Retrieval
+    Graph loaded: 7 nodes, 6 edges
+    Turn 1/10: "What is the currency of Japan?..."
+    ✅ [983ms, 247 ctx tokens, 4 KG hits]
+    Turn 2/10: "Which bank issues that currency?..."
+    ✅ [852ms, 288 ctx tokens, 4 KG hits]
+    Turn 3/10: "Where is the Bank of Japan located?..."
+    ✅ [731ms, 317 ctx tokens, 4 KG hits]
+    Turn 4/10: "Who created the Python programming language?..."
+    ✅ [1180ms, 394 ctx tokens, 5 KG hits]
+    Turn 5/10: "What nationality is the creator of Python?..."
+    ✅ [1030ms, 491 ctx tokens, 6 KG hits]
+    Turn 6/10: "Where did Guido van Rossum work as of 2020?..."
+    ✅ [1214ms, 559 ctx tokens, 7 KG hits]
+    Turn 7/10: "Who founded Microsoft?..."
+    ✅ [4620ms, 547 ctx tokens, 6 KG hits]
+    Turn 8/10: "What is the GDP ranking of Japan globally?..."
+    ✅ [2050ms, 548 ctx tokens, 5 KG hits]
+    Turn 9/10: "When was the Japanese Yen introduced?..."
+    ✅ [2385ms, 576 ctx tokens, 5 KG hits]
+    Turn 10/10: "What year was Python first released and what version is curr..."
+    ✅ [1084ms, 651 ctx tokens, 6 KG hits]
+    ✓ Accuracy: 100.0% | Avg latency: 1613ms
+
+  📊 Run complete: 92.2% accuracy, 3564ms avg latency
+  💾 Saved: results/hierarchical_depth4_trees2_ctx800.md
+  📊 Rolling summary updated (20/48 configs complete)
+
+[21/48] Running config: hierarchical_depth4_trees2_ctx1500
+
+🔬 Run: hierarchical_depth4_trees2_ctx1500
+   Graph: hierarchical | Depth: 4 | Trees: 2 | Ctx: 1500
+  📋 Scenario: Personal Profile Recall
+    Graph loaded: 5 nodes, 5 edges
+    Turn 1/12: "What is Alex Chen's job?..."
+    ✅ [1344ms, 289 ctx tokens, 4 KG hits]
+    Turn 2/12: "Tell me about the weather in Tokyo today...."
+    ➖ [48912ms, 265 ctx tokens, 4 KG hits]
+    Turn 3/12: "How old is Alex?..."
+    ✅ [741ms, 354 ctx tokens, 5 KG hits]
+    Turn 4/12: "What does Alex do in his free time?..."
+    ✅ [885ms, 378 ctx tokens, 5 KG hits]
+    Turn 5/12: "What is the capital of France? Just checking...."
+    ✅ [2656ms, 337 ctx tokens, 4 KG hits]
+    Turn 6/12: "Where does Alex's wife work?..."
+    ✅ [2252ms, 437 ctx tokens, 5 KG hits]
+    Turn 7/12: "Does Alex have any pets? What kind?..."
+    ✅ [4739ms, 475 ctx tokens, 5 KG hits]
+    Turn 8/12: "Quick math: what's 15 times 12?..."
+    ❌ [47536ms, 428 ctx tokens, 4 KG hits]
+       Missing: 180
+    Turn 9/12: "What car does Alex drive?..."
+    ✅ [919ms, 520 ctx tokens, 5 KG hits]
+    Turn 10/12: "What's the name of Alex's daughter and where does she go to ..."
+    ✅ [754ms, 554 ctx tokens, 5 KG hits]
+    Turn 11/12: "Going back to Alex — what company does he work for and what ..."
+    ✅ [991ms, 597 ctx tokens, 5 KG hits]
+    Turn 12/12: "What does Alex order at a coffee shop?..."
+    ✅ [668ms, 636 ctx tokens, 5 KG hits]
+    ✓ Accuracy: 90.9% | Avg latency: 9366ms
+  📋 Scenario: World Knowledge Chain Reasoning
+    Graph loaded: 8 nodes, 5 edges
+    Turn 1/10: "What is the capital of France?..."
+    ✅ [1698ms, 237 ctx tokens, 4 KG hits]
+    Turn 2/10: "What famous structures is that city known for?..."
+    ✅ [4012ms, 341 ctx tokens, 6 KG hits]
+    Turn 3/10: "Albert Einstein — what country was he from originally?..."
+    ✅ [2783ms, 384 ctx tokens, 6 KG hits]
+    Turn 4/10: "What is Einstein most famous for scientifically?..."
+    ✅ [2988ms, 439 ctx tokens, 7 KG hits]
+    Turn 5/10: "Can you name a famous female scientist who won two Nobel Pri..."
+    ✅ [2727ms, 481 ctx tokens, 7 KG hits]
+    Turn 6/10: "How far is the Moon from Earth?..."
+    ✅ [1282ms, 449 ctx tokens, 5 KG hits]
+    Turn 7/10: "What was the first moon landing mission called and when did ..."
+    ✅ [2643ms, 487 ctx tokens, 5 KG hits]
+    Turn 8/10: "How many moons does Mars have, and what are they called?..."
+    ✅ [2029ms, 518 ctx tokens, 5 KG hits]
+    Turn 9/10: "Back to Einstein — did he win a Nobel Prize? When?..."
+    ✅ [2588ms, 594 ctx tokens, 6 KG hits]
+    Turn 10/10: "What language is spoken in the country whose capital is Pari..."
+    ✅ [1993ms, 585 ctx tokens, 5 KG hits]
+    ✓ Accuracy: 100.0% | Avg latency: 2474ms
+  📋 Scenario: Organizational Entity Relations
+    Graph loaded: 8 nodes, 7 edges
+    Turn 1/10: "Who is the CEO of Acme Corp?..."
+    ✅ [2897ms, 220 ctx tokens, 4 KG hits]
+    Turn 2/10: "Who does Priya Sharma report to?..."
+    ❌ [4125ms, 309 ctx tokens, 6 KG hits]
+       Missing: ceo
+    Turn 3/10: "What is Marcus Lee's role at the company?..."
+    ✅ [926ms, 303 ctx tokens, 5 KG hits]
+    Turn 4/10: "How long has the CEO been at Acme Corp?..."
+    ✅ [779ms, 345 ctx tokens, 5 KG hits]
+    Turn 5/10: "Who manages the engineering team under the CTO?..."
+    ✅ [12028ms, 416 ctx tokens, 6 KG hits]
+    Turn 6/10: "Name the senior engineers and their teams...."
+    ✅ [4226ms, 442 ctx tokens, 6 KG hits]
+    Turn 7/10: "Who is responsible for product development reporting to the ..."
+    ✅ [5267ms, 467 ctx tokens, 5 KG hits]
+    Turn 8/10: "If I wanted to talk to someone about finances at Acme, who w..."
+    ❌ [85146ms, 483 ctx tokens, 4 KG hits]
+       Missing: marcus, lee, cfo
+    Turn 9/10: "What department does Aiko Tanaka work in?..."
+    ✅ [1693ms, 535 ctx tokens, 5 KG hits]
+    Turn 10/10: "What year was Acme Corp founded?..."
+    ✅ [909ms, 538 ctx tokens, 4 KG hits]
+    ✓ Accuracy: 80.0% | Avg latency: 11800ms
+  📋 Scenario: Historical Timeline Recall
+    Graph loaded: 6 nodes, 5 edges
+    Turn 1/12: "When did Project Phoenix kick off?..."
+    ✅ [1113ms, 212 ctx tokens, 2 KG hits]
+    Turn 2/12: "What happened at the kickoff meeting?..."
+    ✅ [3945ms, 257 ctx tokens, 2 KG hits]
+    Turn 3/12: "When was the alpha version released?..."
+    ✅ [1160ms, 413 ctx tokens, 5 KG hits]
+    Turn 4/12: "How many bugs were found in the alpha?..."
+    ✅ [1041ms, 465 ctx tokens, 5 KG hits]
+    Turn 5/12: "What was the team size for the project?..."
+    ✅ [988ms, 527 ctx tokens, 6 KG hits]
+    Turn 6/12: "When did the beta launch happen and what version was it?..."
+    ✅ [1177ms, 529 ctx tokens, 5 KG hits]
+    Turn 7/12: "How many external testers participated in beta?..."
+    ✅ [1173ms, 583 ctx tokens, 5 KG hits]
+    Turn 8/12: "What was the official production release date?..."
+    ✅ [1191ms, 618 ctx tokens, 5 KG hits]
+    Turn 9/12: "Who was the launch partner for the production release?..."
+    ✅ [970ms, 660 ctx tokens, 5 KG hits]
+    Turn 10/12: "How quickly did the user base grow after launch?..."
+    ✅ [1377ms, 699 ctx tokens, 5 KG hits]
+    Turn 11/12: "What was the uptime percentage after launch?..."
+    ✅ [2310ms, 747 ctx tokens, 5 KG hits]
+    Turn 12/12: "From kickoff to production, roughly how many months did the ..."
+    ✅ [13997ms, 820 ctx tokens, 6 KG hits]
+    ✓ Accuracy: 100.0% | Avg latency: 2537ms
+  📋 Scenario: Multi-Hop Knowledge Retrieval
+    Graph loaded: 7 nodes, 6 edges
+    Turn 1/10: "What is the currency of Japan?..."
+    ❌ [5408ms, 247 ctx tokens, 4 KG hits]
+       Missing: jpy
+    Turn 2/10: "Which bank issues that currency?..."
+    ✅ [833ms, 275 ctx tokens, 4 KG hits]
+    Turn 3/10: "Where is the Bank of Japan located?..."
+    ✅ [656ms, 303 ctx tokens, 4 KG hits]
+    Turn 4/10: "Who created the Python programming language?..."
+    ✅ [783ms, 376 ctx tokens, 5 KG hits]
+    Turn 5/10: "What nationality is the creator of Python?..."
+    ✅ [958ms, 440 ctx tokens, 6 KG hits]
+    Turn 6/10: "Where did Guido van Rossum work as of 2020?..."
+    ✅ [1054ms, 506 ctx tokens, 7 KG hits]
+    Turn 7/10: "Who founded Microsoft?..."
+    ✅ [1969ms, 492 ctx tokens, 6 KG hits]
+    Turn 8/10: "What is the GDP ranking of Japan globally?..."
+    ✅ [888ms, 491 ctx tokens, 5 KG hits]
+    Turn 9/10: "When was the Japanese Yen introduced?..."
+    ✅ [898ms, 518 ctx tokens, 5 KG hits]
+    Turn 10/10: "What year was Python first released and what version is curr..."
+    ✅ [2468ms, 592 ctx tokens, 6 KG hits]
+    ✓ Accuracy: 90.0% | Avg latency: 1592ms
+
+  📊 Run complete: 92.2% accuracy, 5554ms avg latency
+  💾 Saved: results/hierarchical_depth4_trees2_ctx1500.md
+
+[22/48] Running config: hierarchical_depth4_trees4_ctx400
+
+🔬 Run: hierarchical_depth4_trees4_ctx400
+   Graph: hierarchical | Depth: 4 | Trees: 4 | Ctx: 400
+  📋 Scenario: Personal Profile Recall
+    Graph loaded: 5 nodes, 5 edges
+    Turn 1/12: "What is Alex Chen's job?..."
+    ✅ [1343ms, 289 ctx tokens, 4 KG hits]
+    Turn 2/12: "Tell me about the weather in Tokyo today...."
+    ➖ [59089ms, 265 ctx tokens, 4 KG hits]
+    Turn 3/12: "How old is Alex?..."
+    ✅ [630ms, 344 ctx tokens, 5 KG hits]
+    Turn 4/12: "What does Alex do in his free time?..."
+    ✅ [877ms, 346 ctx tokens, 5 KG hits]
+    Turn 5/12: "What is the capital of France? Just checking...."
+    ✅ [965ms, 335 ctx tokens, 4 KG hits]
+    Turn 6/12: "Where does Alex's wife work?..."
+    ✅ [882ms, 335 ctx tokens, 5 KG hits]
+    Turn 7/12: "Does Alex have any pets? What kind?..."
+    ✅ [1384ms, 345 ctx tokens, 5 KG hits]
+    Turn 8/12: "Quick math: what's 15 times 12?..."
+    ✅ [2200ms, 335 ctx tokens, 4 KG hits]
+    Turn 9/12: "What car does Alex drive?..."
+    ✅ [1272ms, 324 ctx tokens, 5 KG hits]
+    Turn 10/12: "What's the name of Alex's daughter and where does she go to ..."
+    ✅ [783ms, 344 ctx tokens, 5 KG hits]
+    Turn 11/12: "Going back to Alex — what company does he work for and what ..."
+    ✅ [1073ms, 339 ctx tokens, 5 KG hits]
+    Turn 12/12: "What does Alex order at a coffee shop?..."
+    ✅ [741ms, 341 ctx tokens, 5 KG hits]
+    ✓ Accuracy: 100.0% | Avg latency: 5937ms
+  📋 Scenario: World Knowledge Chain Reasoning
+    Graph loaded: 8 nodes, 5 edges
+    Turn 1/10: "What is the capital of France?..."
+    ✅ [1718ms, 237 ctx tokens, 4 KG hits]
+    Turn 2/10: "What famous structures is that city known for?..."
+    ✅ [2001ms, 341 ctx tokens, 6 KG hits]
+    Turn 3/10: "Albert Einstein — what country was he from originally?..."
+    ✅ [2931ms, 344 ctx tokens, 6 KG hits]
+    Turn 4/10: "What is Einstein most famous for scientifically?..."
+    ✅ [3794ms, 349 ctx tokens, 7 KG hits]
+    Turn 5/10: "Can you name a famous female scientist who won two Nobel Pri..."
+    ✅ [3735ms, 353 ctx tokens, 7 KG hits]
+    Turn 6/10: "How far is the Moon from Earth?..."
+    ✅ [802ms, 321 ctx tokens, 5 KG hits]
+    Turn 7/10: "What was the first moon landing mission called and when did ..."
+    ✅ [2555ms, 339 ctx tokens, 5 KG hits]
+    Turn 8/10: "How many moons does Mars have, and what are they called?..."
+    ✅ [2746ms, 347 ctx tokens, 5 KG hits]
+    Turn 9/10: "Back to Einstein — did he win a Nobel Prize? When?..."
+    ✅ [6088ms, 333 ctx tokens, 6 KG hits]
+    Turn 10/10: "What language is spoken in the country whose capital is Pari..."
+    ✅ [4672ms, 343 ctx tokens, 5 KG hits]
+    ✓ Accuracy: 100.0% | Avg latency: 3104ms
+  📋 Scenario: Organizational Entity Relations
+    Graph loaded: 8 nodes, 7 edges
+    Turn 1/10: "Who is the CEO of Acme Corp?..."
+    ✅ [2484ms, 220 ctx tokens, 4 KG hits]
+    Turn 2/10: "Who does Priya Sharma report to?..."
+    ✅ [985ms, 309 ctx tokens, 6 KG hits]
+    Turn 3/10: "What is Marcus Lee's role at the company?..."
+    ✅ [1164ms, 310 ctx tokens, 5 KG hits]
+    Turn 4/10: "How long has the CEO been at Acme Corp?..."
+    ✅ [788ms, 337 ctx tokens, 5 KG hits]
+    Turn 5/10: "Who manages the engineering team under the CTO?..."
+    ✅ [1422ms, 322 ctx tokens, 6 KG hits]
+    Turn 6/10: "Name the senior engineers and their teams...."
+    ✅ [5875ms, 350 ctx tokens, 6 KG hits]
+    Turn 7/10: "Who is responsible for product development reporting to the ..."
+    ❌ [20742ms, 324 ctx tokens, 5 KG hits]
+       Missing: vp product
+    Turn 8/10: "If I wanted to talk to someone about finances at Acme, who w..."
+    ❌ [120034ms, 338 ctx tokens, 4 KG hits]
+       Missing: marcus, lee, cfo
+    Turn 9/10: "What department does Aiko Tanaka work in?..."
+    ✅ [2704ms, 313 ctx tokens, 5 KG hits]
+    Turn 10/10: "What year was Acme Corp founded?..."
+    ✅ [902ms, 350 ctx tokens, 4 KG hits]
+    ✓ Accuracy: 80.0% | Avg latency: 15710ms
+  📋 Scenario: Historical Timeline Recall
+    Graph loaded: 6 nodes, 5 edges
+    Turn 1/12: "When did Project Phoenix kick off?..."
+    ✅ [3211ms, 212 ctx tokens, 2 KG hits]
+    Turn 2/12: "What happened at the kickoff meeting?..."
+    ✅ [1248ms, 242 ctx tokens, 2 KG hits]
+    Turn 3/12: "When was the alpha version released?..."
+    ✅ [1000ms, 316 ctx tokens, 5 KG hits]
+    Turn 4/12: "How many bugs were found in the alpha?..."
+    ✅ [982ms, 339 ctx tokens, 5 KG hits]
+    Turn 5/12: "What was the team size for the project?..."
+    ✅ [919ms, 350 ctx tokens, 6 KG hits]
+    Turn 6/12: "When did the beta launch happen and what version was it?..."
+    ✅ [1016ms, 337 ctx tokens, 5 KG hits]
+    Turn 7/12: "How many external testers participated in beta?..."
