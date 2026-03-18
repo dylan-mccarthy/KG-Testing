@@ -1,8 +1,8 @@
 # Knowledge Graph Testing — Summary Report
 
-_Generated: 2026-03-18T18:24:49.004Z_
+_Generated: 2026-03-18T18:47:20.432Z_
 
-Total runs: **24**
+Total runs: **28**
 
 ## Overall Leaderboard
 
@@ -21,17 +21,21 @@ Total runs: **24**
 | 11 | `simple_depth4_trees2_ctx400` | simple | 400 | 96.0% | 7891ms | 54 |
 | 12 | `hierarchical_depth4_trees4_ctx400` | hierarchical | 400 | 96.0% | 5668ms | 54 |
 | 13 | `hierarchical_depth2_trees4_ctx800` | hierarchical | 800 | 94.3% | 4953ms | 54 |
-| 14 | `simple_depth2_trees2_ctx800` | simple | 800 | 94.2% | 3318ms | 54 |
-| 15 | `simple_depth4_trees4_ctx1500` | simple | 1500 | 94.2% | 4479ms | 54 |
-| 16 | `hierarchical_depth2_trees4_ctx400` | hierarchical | 400 | 94.0% | 3394ms | 54 |
-| 17 | `hierarchical_depth2_trees2_ctx800` | hierarchical | 800 | 92.2% | 3088ms | 54 |
-| 18 | `hierarchical_depth4_trees2_ctx800` | hierarchical | 800 | 92.2% | 3564ms | 54 |
-| 19 | `hierarchical_depth4_trees2_ctx1500` | hierarchical | 1500 | 92.2% | 5554ms | 54 |
-| 20 | `hierarchical_depth4_trees2_ctx400` | hierarchical | 400 | 90.5% | 5534ms | 54 |
-| 21 | `hierarchical_depth2_trees2_ctx1500` | hierarchical | 1500 | 90.4% | 5094ms | 54 |
-| 22 | `hierarchical_depth2_trees2_ctx400` | hierarchical | 400 | 90.2% | 7848ms | 54 |
-| 23 | `hierarchical_depth4_trees4_ctx800` | hierarchical | 800 | 88.5% | 5629ms | 54 |
-| 24 | `hierarchical_depth4_trees4_ctx1500` | hierarchical | 1500 | 88.5% | 4547ms | 54 |
+| 14 | `multi_depth2_trees4_ctx400` | multi | 400 | 94.3% | 5122ms | 54 |
+| 15 | `simple_depth2_trees2_ctx800` | simple | 800 | 94.2% | 3318ms | 54 |
+| 16 | `simple_depth4_trees4_ctx1500` | simple | 1500 | 94.2% | 4479ms | 54 |
+| 17 | `hierarchical_depth2_trees4_ctx400` | hierarchical | 400 | 94.0% | 3394ms | 54 |
+| 18 | `multi_depth2_trees2_ctx400` | multi | 400 | 92.3% | 5727ms | 54 |
+| 19 | `hierarchical_depth2_trees2_ctx800` | hierarchical | 800 | 92.2% | 3088ms | 54 |
+| 20 | `hierarchical_depth4_trees2_ctx800` | hierarchical | 800 | 92.2% | 3564ms | 54 |
+| 21 | `hierarchical_depth4_trees2_ctx1500` | hierarchical | 1500 | 92.2% | 5554ms | 54 |
+| 22 | `multi_depth2_trees2_ctx1500` | multi | 1500 | 92.2% | 5322ms | 54 |
+| 23 | `hierarchical_depth4_trees2_ctx400` | hierarchical | 400 | 90.5% | 5534ms | 54 |
+| 24 | `hierarchical_depth2_trees2_ctx1500` | hierarchical | 1500 | 90.4% | 5094ms | 54 |
+| 25 | `hierarchical_depth2_trees2_ctx400` | hierarchical | 400 | 90.2% | 7848ms | 54 |
+| 26 | `hierarchical_depth4_trees4_ctx800` | hierarchical | 800 | 88.5% | 5629ms | 54 |
+| 27 | `hierarchical_depth4_trees4_ctx1500` | hierarchical | 1500 | 88.5% | 4547ms | 54 |
+| 28 | `multi_depth2_trees2_ctx800` | multi | 800 | 88.2% | 9329ms | 54 |
 
 ## Results by Graph Type
 
@@ -45,13 +49,18 @@ Total runs: **24**
 - Average Latency: **5002ms**
 - Run Count: 12
 
+### multi
+- Average Accuracy: **91.8%**
+- Average Latency: **6375ms**
+- Run Count: 4
+
 ## Effect of Context Window Size
 
 | Context Tokens | Avg Accuracy | Avg Messages Dropped |
 |----------------|-------------|----------------------|
-| 400 | 95.1% | 8.61 |
-| 800 | 94.2% | 0.13 |
-| 1500 | 94.2% | 0.00 |
+| 400 | 94.8% | 8.53 |
+| 800 | 93.5% | 0.12 |
+| 1500 | 94.0% | 0.00 |
 
 ## Scenario Performance Across All Runs
 
@@ -64,19 +73,19 @@ Total runs: **24**
 - Best run: `simple_depth2_trees2_ctx400` (100.0%)
 
 ### entity_relations
-- Average accuracy: **81.7%**
+- Average accuracy: **80.4%**
 - Best run: `simple_depth2_trees2_ctx400` (100.0%)
 
 ### temporal_sequence
-- Average accuracy: **97.2%**
+- Average accuracy: **97.0%**
 - Best run: `simple_depth2_trees2_ctx400` (100.0%)
 
 ### multi_hop
-- Average accuracy: **98.3%**
+- Average accuracy: **97.9%**
 - Best run: `simple_depth2_trees2_ctx400` (100.0%)
 
 ## Key Findings
 
 - **Best performing configuration:** `simple_depth2_trees2_ctx400` — 100.0% accuracy
-- **Worst performing configuration:** `hierarchical_depth4_trees4_ctx1500` — 88.5% accuracy
-- **Context window impact:** Larger context (1500 tokens) vs smaller (400 tokens) = -0.9% accuracy difference
+- **Worst performing configuration:** `multi_depth2_trees2_ctx800` — 88.2% accuracy
+- **Context window impact:** Larger context (1500 tokens) vs smaller (400 tokens) = -0.8% accuracy difference
