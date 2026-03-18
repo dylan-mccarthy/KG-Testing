@@ -34,19 +34,35 @@ export class OllamaClient {
     };
   }
 
-  async chat(messages: ChatMessage[], options?: { temperature?: number }): Promise<ChatResponse> {
-    const body = JSON.stringify({
+  async chat(messages: ChatMessage[], options?: { temperature?: number; timeoutMs?: number; noThink?: boolean }): Promise<ChatResponse> {
+    const ollamaOpts: Record<string, unknown> = {
+      temperature: options?.temperature ?? this.config.temperature,
+      num_ctx: 4096,
+    };
+    const requestBody: Record<string, unknown> = {
       model: this.config.model,
       messages,
       stream: false,
-      options: {
-        temperature: options?.temperature ?? this.config.temperature,
-        num_ctx: 4096,
-      },
-    });
+      options: ollamaOpts,
+    };
+    if (options?.noThink) {
+      // Disable thinking mode for Qwen3 — must be at top-level request body
+      requestBody['think'] = false;
+    }
+    const body = JSON.stringify(requestBody);
+    const timeoutMs = options?.timeoutMs ?? this.config.timeoutMs;
 
     return new Promise((resolve, reject) => {
       const url = new URL('/api/chat', this.config.endpoint);
+      // Use a hard deadline timer in addition to socket idle timeout
+      let settled = false;
+      const deadline = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          req.destroy();
+          reject(new Error(`Ollama request deadline exceeded (${timeoutMs}ms)`));
+        }
+      }, timeoutMs);
       const reqOptions: http.RequestOptions = {
         hostname: url.hostname,
         port: parseInt(url.port || '11434'),
@@ -56,13 +72,15 @@ export class OllamaClient {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(body),
         },
-        timeout: this.config.timeoutMs,
       };
 
       const req = http.request(reqOptions, (res) => {
         let data = '';
         res.on('data', chunk => { data += chunk; });
         res.on('end', () => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(deadline);
           try {
             const parsed = JSON.parse(data) as ChatResponse;
             // Strip <think>...</think> blocks from qwen3 thinking models
@@ -76,10 +94,8 @@ export class OllamaClient {
         });
       });
 
-      req.on('error', reject);
-      req.on('timeout', () => {
-        req.destroy();
-        reject(new Error('Ollama request timed out'));
+      req.on('error', (err) => {
+        if (!settled) { settled = true; clearTimeout(deadline); reject(err); }
       });
 
       req.write(body);

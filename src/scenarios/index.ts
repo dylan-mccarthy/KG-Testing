@@ -1,15 +1,21 @@
-// Test scenario definitions: multi-turn conversation cases
-// Each scenario defines: initial KG data to load + a sequence of turns to execute
+// Test scenarios: natural multi-turn conversations that build knowledge via speech
+// Turn types:
+//   tell          - user shares information; eval: were facts stored in KG?
+//   recall        - user asks about previously told facts; eval: correct keywords in response?
+//   update        - user changes a previously stated fact; eval: KG updated + new value in response
+//   verify_update - ask about updated fact again later; eval: new value present, old value absent
+//   distractor    - off-topic question to test context trimming; no strict keyword check
 
-import { IKnowledgeGraph } from '../graphs';
-import { HierarchicalGraph } from '../graphs/hierarchical';
-import { MultiGraph } from '../graphs/multigraph';
+export type TurnType = 'tell' | 'recall' | 'update' | 'verify_update' | 'distractor';
 
 export interface Turn {
+  type: TurnType;
   userMessage: string;
-  /** Keywords that should appear in a correct answer */
+  /** Keywords that must appear in the response (for recall/update/verify_update) */
   expectedKeywords: string[];
-  /** Optional: the 'fact' this question tests */
+  /** Keywords that must NOT appear (e.g. old value after an update) */
+  forbiddenKeywords: string[];
+  /** Semantic label for this fact being tested */
   factTag: string;
 }
 
@@ -17,299 +23,606 @@ export interface TestScenario {
   id: string;
   name: string;
   description: string;
-  category: 'personal_facts' | 'world_knowledge' | 'entity_relations' | 'temporal' | 'chain_reasoning';
-  /** Load this data into the graph before running */
-  setupGraph: (graph: IKnowledgeGraph) => void;
+  category: 'personal' | 'professional' | 'project' | 'social' | 'mixed';
   turns: Turn[];
 }
 
-// ─────────────────────────────────────────────
-// SCENARIO 1: Personal Facts (10+ turns)
-// ─────────────────────────────────────────────
-const personalFacts: TestScenario = {
-  id: 'personal_facts',
-  name: 'Personal Profile Recall',
-  description: 'Tests recall of personal facts about a fictional person across many turns with distracting questions.',
-  category: 'personal_facts',
-  setupGraph: (graph) => {
-    const alex = graph.addNode('Alex Chen', {
-      age: 34,
-      job: 'Senior Software Engineer',
-      company: 'NovaTech Solutions',
-      city: 'Seattle',
-      country: 'USA',
-      hobby1: 'rock climbing',
-      hobby2: 'photography',
-      pet: 'cat named Pixel',
-      car: 'Tesla Model 3',
-      coffee_order: 'oat milk latte',
-    }, ['person', 'alex', 'chen', 'engineer']);
-
-    const employer = graph.addNode('NovaTech Solutions', {
-      type: 'tech company',
-      founded: 2015,
-      employees: 1200,
-      headquarters: 'Seattle',
-      product: 'cloud infrastructure software',
-    }, ['company', 'novatech', 'employer']);
-
-    const sarah = graph.addNode('Sarah Kim', {
-      relation: 'wife',
-      job: 'pediatric nurse',
-      hospital: 'Seattle Children\'s Hospital',
-    }, ['person', 'sarah', 'wife', 'nurse']);
-
-    const daughter = graph.addNode('Lily Chen', {
-      age: 6,
-      school: 'Maple Elementary',
-      relation: 'daughter',
-    }, ['person', 'lily', 'daughter', 'child']);
-
-    const pixel = graph.addNode('Pixel', {
-      species: 'cat',
-      breed: 'Maine Coon',
-      age: 3,
-      color: 'orange tabby',
-    }, ['cat', 'pet', 'pixel', 'animal']);
-
-    graph.addEdge(alex.id, employer.id, 'works_at');
-    graph.addEdge(alex.id, sarah.id, 'married_to');
-    graph.addEdge(alex.id, daughter.id, 'parent_of');
-    graph.addEdge(alex.id, pixel.id, 'owns');
-    graph.addEdge(sarah.id, daughter.id, 'parent_of');
-  },
+// ─────────────────────────────────────────────────────────────────────────────
+// SCENARIO 1: Personal Introduction + Job Change
+// User introduces themselves across several turns, then gets a promotion
+// ─────────────────────────────────────────────────────────────────────────────
+export const personalIntroduction: TestScenario = {
+  id: 'personal_introduction',
+  name: 'Personal Introduction & Career Update',
+  description: 'User introduces personal facts over many turns, agent recalls them, then user updates their job title and the change is verified.',
+  category: 'personal',
   turns: [
-    { userMessage: "What is Alex Chen's job?", expectedKeywords: ['software engineer'], factTag: 'job' },
-    { userMessage: "Tell me about the weather in Tokyo today.", expectedKeywords: [], factTag: 'distractor' },
-    { userMessage: "How old is Alex?", expectedKeywords: ['34'], factTag: 'age' },
-    { userMessage: "What does Alex do in his free time?", expectedKeywords: ['climbing', 'photography'], factTag: 'hobbies' },
-    { userMessage: "What is the capital of France? Just checking.", expectedKeywords: ['Paris'], factTag: 'distractor' },
-    { userMessage: "Where does Alex's wife work?", expectedKeywords: ["children", 'hospital', 'seattle', 'nurse'], factTag: 'spouse_job' },
-    { userMessage: "Does Alex have any pets? What kind?", expectedKeywords: ['cat', 'pixel', 'maine coon'], factTag: 'pet' },
-    { userMessage: "Quick math: what's 15 times 12?", expectedKeywords: ['180'], factTag: 'distractor' },
-    { userMessage: "What car does Alex drive?", expectedKeywords: ['tesla', 'model 3'], factTag: 'car' },
-    { userMessage: "What's the name of Alex's daughter and where does she go to school?", expectedKeywords: ['lily', 'maple elementary'], factTag: 'daughter' },
-    { userMessage: "Going back to Alex — what company does he work for and what do they make?", expectedKeywords: ['novatech', 'cloud', 'infrastructure'], factTag: 'employer_product' },
-    { userMessage: "What does Alex order at a coffee shop?", expectedKeywords: ['oat milk', 'latte'], factTag: 'coffee' },
+    {
+      type: 'tell',
+      userMessage: "Hi! My name is Jordan Blake and I'm 29 years old.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_name_age',
+    },
+    {
+      type: 'tell',
+      userMessage: "I work as a data analyst at a company called DataStream Inc. I've been there for 3 years.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_job',
+    },
+    {
+      type: 'tell',
+      userMessage: "I live in Austin, Texas. My favourite hobby is Brazilian jiu-jitsu — I train 4 times a week.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_location_hobby',
+    },
+    {
+      type: 'recall',
+      userMessage: "What's my name and how old am I?",
+      expectedKeywords: ['jordan', 'blake', '29'],
+      forbiddenKeywords: [],
+      factTag: 'recall_name_age',
+    },
+    {
+      type: 'distractor',
+      userMessage: "Who won the FIFA World Cup in 2022?",
+      expectedKeywords: ['argentina'],
+      forbiddenKeywords: [],
+      factTag: 'distractor_football',
+    },
+    {
+      type: 'recall',
+      userMessage: "Where do I work and what's my role there?",
+      expectedKeywords: ['datastream', 'analyst'],
+      forbiddenKeywords: [],
+      factTag: 'recall_job',
+    },
+    {
+      type: 'tell',
+      userMessage: "I also have a golden retriever named Biscuit who is 2 years old.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_pet',
+    },
+    {
+      type: 'recall',
+      userMessage: "What sport do I practise and how often?",
+      expectedKeywords: ['jiu-jitsu', '4'],
+      forbiddenKeywords: [],
+      factTag: 'recall_hobby',
+    },
+    {
+      type: 'distractor',
+      userMessage: "Can you explain what a neural network is in simple terms?",
+      expectedKeywords: ['neural', 'network'],
+      forbiddenKeywords: [],
+      factTag: 'distractor_ml',
+    },
+    {
+      type: 'update',
+      userMessage: "Great news — I just got promoted! I'm now a Senior Data Analyst at DataStream.",
+      expectedKeywords: ['senior', 'analyst', 'promoted'],
+      forbiddenKeywords: [],
+      factTag: 'update_job_title',
+    },
+    {
+      type: 'recall',
+      userMessage: "What's my pet's name and how old is it?",
+      expectedKeywords: ['biscuit', '2'],
+      forbiddenKeywords: [],
+      factTag: 'recall_pet',
+    },
+    {
+      type: 'distractor',
+      userMessage: "What is the boiling point of water in Fahrenheit?",
+      expectedKeywords: ['212'],
+      forbiddenKeywords: [],
+      factTag: 'distractor_science',
+    },
+    {
+      type: 'verify_update',
+      userMessage: "What is my current job title?",
+      expectedKeywords: ['senior', 'analyst'],
+      forbiddenKeywords: [],
+      factTag: 'verify_job_title',
+    },
+    {
+      type: 'recall',
+      userMessage: "What city do I live in?",
+      expectedKeywords: ['austin', 'texas'],
+      forbiddenKeywords: [],
+      factTag: 'recall_location',
+    },
+    {
+      type: 'verify_update',
+      userMessage: "How long have I been working in data? And what's my current role?",
+      expectedKeywords: ['datastream', 'senior'],
+      forbiddenKeywords: [],
+      factTag: 'verify_employer_new_role',
+    },
   ],
 };
 
-// ─────────────────────────────────────────────
-// SCENARIO 2: World Knowledge + Chain Reasoning
-// ─────────────────────────────────────────────
-const worldKnowledge: TestScenario = {
-  id: 'world_knowledge',
-  name: 'World Knowledge Chain Reasoning',
-  description: 'Tests multi-hop reasoning across geography, history, and science facts stored in the KG.',
-  category: 'chain_reasoning',
-  setupGraph: (graph) => {
-    // Countries and capitals
-    const france = graph.addNode('France', { capital: 'Paris', continent: 'Europe', language: 'French', population: '68 million' }, ['country', 'france', 'europe']);
-    const paris = graph.addNode('Paris', { type: 'city', population: '2.1 million', river: 'Seine', famous_for: 'Eiffel Tower, Louvre' }, ['city', 'paris', 'capital']);
-    const germany = graph.addNode('Germany', { capital: 'Berlin', continent: 'Europe', language: 'German', population: '84 million' }, ['country', 'germany', 'europe']);
-    const berlin = graph.addNode('Berlin', { type: 'city', population: '3.7 million', famous_for: 'Brandenburg Gate, Berlin Wall history' }, ['city', 'berlin', 'capital']);
-
-    // Scientists
-    const einstein = graph.addNode('Albert Einstein', {
-      born: 1879, died: 1955, nationality: 'German-American',
-      famous_for: 'Theory of Relativity, E=mc2', Nobel_Prize: 1921,
-    }, ['scientist', 'einstein', 'physicist', 'person']);
-    const curie = graph.addNode('Marie Curie', {
-      born: 1867, died: 1934, nationality: 'Polish-French',
-      famous_for: 'Discovery of radium and polonium', Nobel_Prizes: 2,
-    }, ['scientist', 'curie', 'chemist', 'physicist', 'person']);
-
-    // Space
-    const moon = graph.addNode('Moon', {
-      type: 'natural satellite', distance_from_earth: '384400 km',
-      first_landing: '1969', mission: 'Apollo 11',
-      diameter: '3474 km',
-    }, ['moon', 'space', 'satellite', 'celestial']);
-    const mars = graph.addNode('Mars', {
-      type: 'planet', distance_from_earth: '225 million km average',
-      moons: 2, moon_names: 'Phobos and Deimos', atmosphere: 'mostly CO2',
-    }, ['mars', 'planet', 'space']);
-
-    graph.addEdge(france.id, paris.id, 'capital_is');
-    graph.addEdge(germany.id, berlin.id, 'capital_is');
-    graph.addEdge(einstein.id, germany.id, 'born_in');
-    graph.addEdge(curie.id, france.id, 'worked_in');
-    graph.addEdge(moon.id, mars.id, 'different_from');
-  },
+// ─────────────────────────────────────────────────────────────────────────────
+// SCENARIO 2: Team Building + Role Change
+// User introduces their team members, then one changes roles
+// ─────────────────────────────────────────────────────────────────────────────
+export const teamBuilding: TestScenario = {
+  id: 'team_building',
+  name: 'Team Building & Role Reassignment',
+  description: 'User describes their team across multiple turns, recalls team member details, then one member changes roles and the change is verified.',
+  category: 'professional',
   turns: [
-    { userMessage: "What is the capital of France?", expectedKeywords: ['paris'], factTag: 'france_capital' },
-    { userMessage: "What famous structures is that city known for?", expectedKeywords: ['eiffel', 'louvre'], factTag: 'paris_landmarks' },
-    { userMessage: "Albert Einstein — what country was he from originally?", expectedKeywords: ['german', 'germany'], factTag: 'einstein_nationality' },
-    { userMessage: "What is Einstein most famous for scientifically?", expectedKeywords: ['relativity', 'e=mc'], factTag: 'einstein_work' },
-    { userMessage: "Can you name a famous female scientist who won two Nobel Prizes?", expectedKeywords: ['curie', 'marie'], factTag: 'curie_prizes' },
-    { userMessage: "How far is the Moon from Earth?", expectedKeywords: ['384'], factTag: 'moon_distance' },
-    { userMessage: "What was the first moon landing mission called and when did it happen?", expectedKeywords: ['apollo 11', '1969'], factTag: 'moon_landing' },
-    { userMessage: "How many moons does Mars have, and what are they called?", expectedKeywords: ['2', 'phobos', 'deimos'], factTag: 'mars_moons' },
-    { userMessage: "Back to Einstein — did he win a Nobel Prize? When?", expectedKeywords: ['1921', 'nobel'], factTag: 'einstein_nobel' },
-    { userMessage: "What language is spoken in the country whose capital is Paris?", expectedKeywords: ['french'], factTag: 'france_language' },
+    {
+      type: 'tell',
+      userMessage: "I manage a small engineering team. Let me tell you about them. First there's Priya, she's our backend developer — she specialises in Python and databases.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_priya',
+    },
+    {
+      type: 'tell',
+      userMessage: "Then we have Marcus. He's our DevOps engineer and handles all our cloud infrastructure on AWS.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_marcus',
+    },
+    {
+      type: 'tell',
+      userMessage: "Our frontend developer is Yuki. She's excellent with React and TypeScript. She just joined 6 months ago.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_yuki',
+    },
+    {
+      type: 'recall',
+      userMessage: "What does Priya specialise in?",
+      expectedKeywords: ['python', 'backend', 'database'],
+      forbiddenKeywords: [],
+      factTag: 'recall_priya_skills',
+    },
+    {
+      type: 'tell',
+      userMessage: "I should also mention our QA lead, Dmitri. He's been with us for 5 years and writes all our automated test suites.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_dmitri',
+    },
+    {
+      type: 'distractor',
+      userMessage: "What's the difference between TCP and UDP?",
+      expectedKeywords: ['tcp', 'udp'],
+      forbiddenKeywords: [],
+      factTag: 'distractor_networking',
+    },
+    {
+      type: 'recall',
+      userMessage: "Who manages our cloud infrastructure and what platform do we use?",
+      expectedKeywords: ['marcus', 'aws'],
+      forbiddenKeywords: [],
+      factTag: 'recall_marcus_devops',
+    },
+    {
+      type: 'recall',
+      userMessage: "How long has Yuki been on the team and what's her tech stack?",
+      expectedKeywords: ['yuki', '6', 'react', 'typescript'],
+      forbiddenKeywords: [],
+      factTag: 'recall_yuki_tenure',
+    },
+    {
+      type: 'distractor',
+      userMessage: "Can you give me a quick overview of what Kubernetes does?",
+      expectedKeywords: ['kubernetes', 'container'],
+      forbiddenKeywords: [],
+      factTag: 'distractor_k8s',
+    },
+    {
+      type: 'update',
+      userMessage: "Big news — Priya has been promoted to Tech Lead. She's stepping back from hands-on backend coding and will now be leading the whole team technically.",
+      expectedKeywords: ['priya', 'tech lead', 'promoted'],
+      forbiddenKeywords: [],
+      factTag: 'update_priya_role',
+    },
+    {
+      type: 'recall',
+      userMessage: "How long has Dmitri been with us and what does he do?",
+      expectedKeywords: ['dmitri', '5', 'qa', 'test'],
+      forbiddenKeywords: [],
+      factTag: 'recall_dmitri',
+    },
+    {
+      type: 'distractor',
+      userMessage: "What year was Python first released?",
+      expectedKeywords: ['1991'],
+      forbiddenKeywords: [],
+      factTag: 'distractor_python',
+    },
+    {
+      type: 'verify_update',
+      userMessage: "What is Priya's current role?",
+      expectedKeywords: ['tech lead', 'priya'],
+      forbiddenKeywords: ['backend developer'],
+      factTag: 'verify_priya_new_role',
+    },
+    {
+      type: 'recall',
+      userMessage: "Who's our frontend developer and what does she work with?",
+      expectedKeywords: ['yuki', 'react', 'typescript'],
+      forbiddenKeywords: [],
+      factTag: 'recall_yuki_skills',
+    },
+    {
+      type: 'verify_update',
+      userMessage: "Give me a quick summary of Priya — what changed about her role and what does she do now?",
+      expectedKeywords: ['priya', 'lead'],
+      forbiddenKeywords: [],
+      factTag: 'verify_priya_summary',
+    },
   ],
 };
 
-// ─────────────────────────────────────────────
-// SCENARIO 3: Entity Relationships (Org Chart)
-// ─────────────────────────────────────────────
-const entityRelations: TestScenario = {
-  id: 'entity_relations',
-  name: 'Organizational Entity Relations',
-  description: 'Tests recall of complex organizational relationships: who manages whom, department structures.',
-  category: 'entity_relations',
-  setupGraph: (graph) => {
-    const company = graph.addNode('Acme Corp', { industry: 'manufacturing', employees: 5000, founded: 1998 }, ['company', 'acme', 'org']);
-
-    const ceo = graph.addNode('Jordan Wells', { title: 'CEO', tenure_years: 8, salary_band: 'executive' }, ['person', 'jordan', 'wells', 'ceo', 'executive']);
-    const cto = graph.addNode('Priya Sharma', { title: 'CTO', department: 'Engineering', reports_to: 'CEO' }, ['person', 'priya', 'sharma', 'cto', 'engineering']);
-    const cfo = graph.addNode('Marcus Lee', { title: 'CFO', department: 'Finance', reports_to: 'CEO' }, ['person', 'marcus', 'lee', 'cfo', 'finance']);
-    const vp_eng = graph.addNode('Rachel Torres', { title: 'VP Engineering', department: 'Engineering', reports_to: 'CTO' }, ['person', 'rachel', 'torres', 'vp', 'engineering']);
-    const vp_prod = graph.addNode('Omar Hassan', { title: 'VP Product', department: 'Product', reports_to: 'CTO' }, ['person', 'omar', 'hassan', 'vp', 'product']);
-    const sr_eng1 = graph.addNode('Lin Wei', { title: 'Senior Engineer', team: 'Platform', reports_to: 'VP Engineering' }, ['person', 'lin', 'wei', 'engineer']);
-    const sr_eng2 = graph.addNode('Aiko Tanaka', { title: 'Senior Engineer', team: 'Data', reports_to: 'VP Engineering' }, ['person', 'aiko', 'tanaka', 'engineer']);
-
-    graph.addEdge(ceo.id, company.id, 'leads');
-    graph.addEdge(cto.id, ceo.id, 'reports_to');
-    graph.addEdge(cfo.id, ceo.id, 'reports_to');
-    graph.addEdge(vp_eng.id, cto.id, 'reports_to');
-    graph.addEdge(vp_prod.id, cto.id, 'reports_to');
-    graph.addEdge(sr_eng1.id, vp_eng.id, 'reports_to');
-    graph.addEdge(sr_eng2.id, vp_eng.id, 'reports_to');
-  },
+// ─────────────────────────────────────────────────────────────────────────────
+// SCENARIO 3: Project Tracking + Status Changes
+// User tracks a project across turns, milestones change
+// ─────────────────────────────────────────────────────────────────────────────
+export const projectTracking: TestScenario = {
+  id: 'project_tracking',
+  name: 'Project Tracking & Milestone Changes',
+  description: 'User reports project progress across turns, asks for recalls of key dates and decisions, then updates a deadline and verifies the change.',
+  category: 'project',
   turns: [
-    { userMessage: "Who is the CEO of Acme Corp?", expectedKeywords: ['jordan', 'wells'], factTag: 'ceo' },
-    { userMessage: "Who does Priya Sharma report to?", expectedKeywords: ['jordan', 'ceo', 'wells'], factTag: 'cto_reports' },
-    { userMessage: "What is Marcus Lee's role at the company?", expectedKeywords: ['cfo', 'finance'], factTag: 'cfo_role' },
-    { userMessage: "How long has the CEO been at Acme Corp?", expectedKeywords: ['8'], factTag: 'ceo_tenure' },
-    { userMessage: "Who manages the engineering team under the CTO?", expectedKeywords: ['rachel', 'torres', 'vp engineering'], factTag: 'vp_eng' },
-    { userMessage: "Name the senior engineers and their teams.", expectedKeywords: ['lin wei', 'aiko tanaka', 'platform', 'data'], factTag: 'sr_engineers' },
-    { userMessage: "Who is responsible for product development reporting to the CTO?", expectedKeywords: ['omar', 'hassan', 'vp product'], factTag: 'vp_prod' },
-    { userMessage: "If I wanted to talk to someone about finances at Acme, who would that be?", expectedKeywords: ['marcus', 'lee', 'cfo'], factTag: 'finance_contact' },
-    { userMessage: "What department does Aiko Tanaka work in?", expectedKeywords: ['engineering', 'data'], factTag: 'aiko_dept' },
-    { userMessage: "What year was Acme Corp founded?", expectedKeywords: ['1998'], factTag: 'founding_year' },
+    {
+      type: 'tell',
+      userMessage: "We just kicked off Project Orion today — it's a customer portal rebuild for Nexus Financial. The project has a budget of $850,000 and a team of 8 people.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_project',
+    },
+    {
+      type: 'tell',
+      userMessage: "Our design phase is planned to run through the end of March. The lead designer is Camille and she's using Figma for all the mockups.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_design_phase',
+    },
+    {
+      type: 'tell',
+      userMessage: "The development phase starts April 1st and we're targeting a beta release on June 15th.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_dev_dates',
+    },
+    {
+      type: 'recall',
+      userMessage: "What's the budget for Project Orion and who is our client?",
+      expectedKeywords: ['850', 'nexus', 'financial'],
+      forbiddenKeywords: [],
+      factTag: 'recall_budget_client',
+    },
+    {
+      type: 'distractor',
+      userMessage: "What does REST stand for in REST API?",
+      expectedKeywords: ['representational', 'state', 'transfer'],
+      forbiddenKeywords: [],
+      factTag: 'distractor_rest',
+    },
+    {
+      type: 'tell',
+      userMessage: "We've decided to use React on the frontend and a Node.js microservices architecture on the backend. PostgreSQL will be our main database.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_tech_stack',
+    },
+    {
+      type: 'recall',
+      userMessage: "When does our development phase kick off and who's leading design?",
+      expectedKeywords: ['april', 'camille'],
+      forbiddenKeywords: [],
+      factTag: 'recall_dev_start_designer',
+    },
+    {
+      type: 'recall',
+      userMessage: "What's the tech stack we chose for Orion?",
+      expectedKeywords: ['react', 'node', 'postgresql'],
+      forbiddenKeywords: [],
+      factTag: 'recall_tech_stack',
+    },
+    {
+      type: 'distractor',
+      userMessage: "What is SOLID in software engineering?",
+      expectedKeywords: ['single', 'open', 'principle'],
+      forbiddenKeywords: [],
+      factTag: 'distractor_solid',
+    },
+    {
+      type: 'update',
+      userMessage: "Bad news — we've hit a scope expansion. The beta release date has been pushed from June 15th to August 1st due to the added payment module requirements.",
+      expectedKeywords: ['august', 'beta', 'pushed'],
+      forbiddenKeywords: [],
+      factTag: 'update_beta_date',
+    },
+    {
+      type: 'tell',
+      userMessage: "The payment module will be built by an external vendor called PayCraft. They'll deliver their SDK by July 1st.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_paycraft',
+    },
+    {
+      type: 'recall',
+      userMessage: "What database are we using and what's the team size?",
+      expectedKeywords: ['postgresql', '8'],
+      forbiddenKeywords: [],
+      factTag: 'recall_db_team',
+    },
+    {
+      type: 'distractor',
+      userMessage: "Explain the difference between a stack and a queue.",
+      expectedKeywords: ['stack', 'queue', 'lifo'],
+      forbiddenKeywords: [],
+      factTag: 'distractor_data_structures',
+    },
+    {
+      type: 'verify_update',
+      userMessage: "When is our beta release now?",
+      expectedKeywords: ['august'],
+      forbiddenKeywords: ['june 15'],
+      factTag: 'verify_beta_date',
+    },
+    {
+      type: 'verify_update',
+      userMessage: "Why did the beta get pushed back, and who is handling the payment module?",
+      expectedKeywords: ['payment', 'paycraft', 'august'],
+      forbiddenKeywords: [],
+      factTag: 'verify_delay_reason',
+    },
   ],
 };
 
-// ─────────────────────────────────────────────
-// SCENARIO 4: Temporal Sequence
-// ─────────────────────────────────────────────
-const temporalSequence: TestScenario = {
-  id: 'temporal_sequence',
-  name: 'Historical Timeline Recall',
-  description: 'Tests recall of a project timeline with dates and milestones across many turns.',
-  category: 'temporal',
-  setupGraph: (graph) => {
-    const project = graph.addNode('Project Phoenix', {
-      type: 'software project',
-      status: 'completed',
-      team_size: 12,
-      total_budget: '$2.4M',
-    }, ['project', 'phoenix', 'software']);
-
-    const milestone1 = graph.addNode('Kickoff Meeting', {
-      date: 'January 15, 2024',
-      attendees: 'full team + stakeholders',
-      outcome: 'requirements finalized',
-      location: 'HQ Conference Room A',
-    }, ['milestone', 'kickoff', 'meeting', 'january', '2024']);
-
-    const milestone2 = graph.addNode('Alpha Release', {
-      date: 'March 8, 2024',
-      version: 'v0.1.0-alpha',
-      bugs_found: 47,
-      testers: 'internal QA team',
-    }, ['milestone', 'alpha', 'release', 'march', '2024']);
-
-    const milestone3 = graph.addNode('Beta Launch', {
-      date: 'May 22, 2024',
-      version: 'v0.8.0-beta',
-      external_testers: 250,
-      feedback_score: '4.2/5',
-    }, ['milestone', 'beta', 'launch', 'may', '2024']);
-
-    const milestone4 = graph.addNode('Production Release', {
-      date: 'August 1, 2024',
-      version: 'v1.0.0',
-      initial_users: 10000,
-      launch_partner: 'TechCorp Industries',
-    }, ['milestone', 'production', 'release', 'launch', 'august', '2024']);
-
-    const milestone5 = graph.addNode('Post-Launch Review', {
-      date: 'September 15, 2024',
-      uptime_achieved: '99.7%',
-      user_growth: '340% in 45 days',
-      issues_resolved: 23,
-    }, ['milestone', 'review', 'september', '2024', 'postlaunch']);
-
-    graph.addEdge(project.id, milestone1.id, 'started_with');
-    graph.addEdge(milestone1.id, milestone2.id, 'followed_by');
-    graph.addEdge(milestone2.id, milestone3.id, 'followed_by');
-    graph.addEdge(milestone3.id, milestone4.id, 'followed_by');
-    graph.addEdge(milestone4.id, milestone5.id, 'followed_by');
-  },
+// ─────────────────────────────────────────────────────────────────────────────
+// SCENARIO 4: Social Network + Relationship Change
+// User describes their social circle, relationships change
+// ─────────────────────────────────────────────────────────────────────────────
+export const socialNetwork: TestScenario = {
+  id: 'social_network',
+  name: 'Social Network & Relationship Updates',
+  description: 'User describes friends and their details across turns; one friend moves cities and changes jobs; the agent must recall original then updated info.',
+  category: 'social',
   turns: [
-    { userMessage: "When did Project Phoenix kick off?", expectedKeywords: ['january', '15', '2024'], factTag: 'kickoff_date' },
-    { userMessage: "What happened at the kickoff meeting?", expectedKeywords: ['requirements', 'finalized'], factTag: 'kickoff_outcome' },
-    { userMessage: "When was the alpha version released?", expectedKeywords: ['march', '8', '2024'], factTag: 'alpha_date' },
-    { userMessage: "How many bugs were found in the alpha?", expectedKeywords: ['47'], factTag: 'alpha_bugs' },
-    { userMessage: "What was the team size for the project?", expectedKeywords: ['12'], factTag: 'team_size' },
-    { userMessage: "When did the beta launch happen and what version was it?", expectedKeywords: ['may', '22', '2024', 'v0.8'], factTag: 'beta_launch' },
-    { userMessage: "How many external testers participated in beta?", expectedKeywords: ['250'], factTag: 'beta_testers' },
-    { userMessage: "What was the official production release date?", expectedKeywords: ['august', '1', '2024'], factTag: 'prod_date' },
-    { userMessage: "Who was the launch partner for the production release?", expectedKeywords: ['techcorp'], factTag: 'launch_partner' },
-    { userMessage: "How quickly did the user base grow after launch?", expectedKeywords: ['340', '45'], factTag: 'user_growth' },
-    { userMessage: "What was the uptime percentage after launch?", expectedKeywords: ['99.7'], factTag: 'uptime' },
-    { userMessage: "From kickoff to production, roughly how many months did the project take?", expectedKeywords: ['6'], factTag: 'duration' },
+    {
+      type: 'tell',
+      userMessage: "I want to tell you about my friend Sam. Sam is a graphic designer who lives in Melbourne and works at a studio called Pixel & Ink.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_sam',
+    },
+    {
+      type: 'tell',
+      userMessage: "My other close friend is Tariq. He's a high school maths teacher in London. He's been teaching for 8 years.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_tariq',
+    },
+    {
+      type: 'tell',
+      userMessage: "And there's Lena — she's a freelance photographer based in Berlin. She mainly does travel and food photography.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_lena',
+    },
+    {
+      type: 'recall',
+      userMessage: "Where does Sam live and what does she do for work?",
+      expectedKeywords: ['melbourne', 'designer', 'pixel'],
+      forbiddenKeywords: [],
+      factTag: 'recall_sam',
+    },
+    {
+      type: 'distractor',
+      userMessage: "What's the capital city of Australia?",
+      expectedKeywords: ['canberra'],
+      forbiddenKeywords: [],
+      factTag: 'distractor_geography',
+    },
+    {
+      type: 'recall',
+      userMessage: "How long has Tariq been teaching and what subject?",
+      expectedKeywords: ['tariq', '8', 'maths', 'teacher'],
+      forbiddenKeywords: [],
+      factTag: 'recall_tariq',
+    },
+    {
+      type: 'tell',
+      userMessage: "I should also mention my friend Zoe. She's a software developer in Toronto, working on mobile apps for a startup called AppLaunch.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_zoe',
+    },
+    {
+      type: 'recall',
+      userMessage: "What kind of photography does Lena do and where is she based?",
+      expectedKeywords: ['lena', 'berlin', 'travel', 'food'],
+      forbiddenKeywords: [],
+      factTag: 'recall_lena',
+    },
+    {
+      type: 'distractor',
+      userMessage: "What is the speed of light in kilometres per second?",
+      expectedKeywords: ['300'],
+      forbiddenKeywords: [],
+      factTag: 'distractor_physics',
+    },
+    {
+      type: 'update',
+      userMessage: "Big life update — Sam has moved from Melbourne to Sydney! And she's left Pixel & Ink to go freelance.",
+      expectedKeywords: ['sam', 'sydney', 'freelance'],
+      forbiddenKeywords: [],
+      factTag: 'update_sam_location_job',
+    },
+    {
+      type: 'recall',
+      userMessage: "Where does Zoe work and what does she do?",
+      expectedKeywords: ['zoe', 'toronto', 'applaunch', 'mobile'],
+      forbiddenKeywords: [],
+      factTag: 'recall_zoe',
+    },
+    {
+      type: 'distractor',
+      userMessage: "Who wrote the novel '1984'?",
+      expectedKeywords: ['orwell', 'george'],
+      forbiddenKeywords: [],
+      factTag: 'distractor_literature',
+    },
+    {
+      type: 'verify_update',
+      userMessage: "Where does Sam live now?",
+      expectedKeywords: ['sydney'],
+      forbiddenKeywords: ['melbourne'],
+      factTag: 'verify_sam_location',
+    },
+    {
+      type: 'recall',
+      userMessage: "Tell me about Tariq — where is he, how long has he taught?",
+      expectedKeywords: ['tariq', 'london', '8'],
+      forbiddenKeywords: [],
+      factTag: 'recall_tariq_full',
+    },
+    {
+      type: 'verify_update',
+      userMessage: "What's Sam's current work situation — where is she and does she still work at Pixel and Ink?",
+      expectedKeywords: ['sydney', 'freelance'],
+      forbiddenKeywords: ['melbourne'],
+      factTag: 'verify_sam_job',
+    },
   ],
 };
 
-// ─────────────────────────────────────────────
-// SCENARIO 5: Multi-hop Reasoning
-// ─────────────────────────────────────────────
-const multiHop: TestScenario = {
-  id: 'multi_hop',
-  name: 'Multi-Hop Knowledge Retrieval',
-  description: 'Tests ability to chain multiple KG nodes to answer questions requiring multi-hop reasoning.',
-  category: 'chain_reasoning',
-  setupGraph: (graph) => {
-    // A small universe of interconnected facts
-    const tokyo = graph.addNode('Tokyo', { country: 'Japan', population: '13.96 million', timezone: 'JST UTC+9', type: 'city' }, ['tokyo', 'city', 'japan', 'capital']);
-    const japan = graph.addNode('Japan', { continent: 'Asia', capital: 'Tokyo', currency: 'Yen', language: 'Japanese', gdp_rank: 4 }, ['japan', 'country', 'asia']);
-    const yen = graph.addNode('Japanese Yen', { symbol: '¥', code: 'JPY', issuer: 'Bank of Japan', introduced: 1871 }, ['yen', 'currency', 'jpy', 'money']);
-    const boj = graph.addNode('Bank of Japan', { founded: 1882, governor_2024: 'Kazuo Ueda', type: 'central bank', location: 'Tokyo' }, ['bank', 'boj', 'central bank', 'japan']);
-
-    const python = graph.addNode('Python', { type: 'programming language', created: 1991, creator: 'Guido van Rossum', paradigm: 'multi-paradigm', current_version: '3.12' }, ['python', 'programming', 'language', 'code']);
-    const guido = graph.addNode('Guido van Rossum', { nationality: 'Dutch', born: 1956, employer_2020: 'Microsoft', known_for: 'Python language' }, ['guido', 'van rossum', 'programmer', 'dutch', 'person']);
-    const microsoft = graph.addNode('Microsoft', { founded: 1975, founders: 'Bill Gates and Paul Allen', headquarters: 'Redmond, Washington', products: 'Windows, Azure, Office' }, ['microsoft', 'company', 'tech', 'software']);
-
-    graph.addEdge(tokyo.id, japan.id, 'capital_of');
-    graph.addEdge(japan.id, yen.id, 'uses_currency');
-    graph.addEdge(yen.id, boj.id, 'issued_by');
-    graph.addEdge(boj.id, tokyo.id, 'located_in');
-    graph.addEdge(python.id, guido.id, 'created_by');
-    graph.addEdge(guido.id, microsoft.id, 'employed_by');
-  },
+// ─────────────────────────────────────────────────────────────────────────────
+// SCENARIO 5: Mixed - Personal + Professional + Multiple Updates
+// User shares both personal and professional facts, multiple updates tested
+// ─────────────────────────────────────────────────────────────────────────────
+export const mixedUpdates: TestScenario = {
+  id: 'mixed_updates',
+  name: 'Mixed Facts with Multiple Concurrent Updates',
+  description: 'User shares a mix of personal and professional facts across many turns, then multiple facts change and are verified independently.',
+  category: 'mixed',
   turns: [
-    { userMessage: "What is the currency of Japan?", expectedKeywords: ['yen', 'jpy'], factTag: 'japan_currency' },
-    { userMessage: "Which bank issues that currency?", expectedKeywords: ['bank of japan'], factTag: 'yen_issuer' },
-    { userMessage: "Where is the Bank of Japan located?", expectedKeywords: ['tokyo'], factTag: 'boj_location' },
-    { userMessage: "Who created the Python programming language?", expectedKeywords: ['guido', 'van rossum'], factTag: 'python_creator' },
-    { userMessage: "What nationality is the creator of Python?", expectedKeywords: ['dutch'], factTag: 'guido_nationality' },
-    { userMessage: "Where did Guido van Rossum work as of 2020?", expectedKeywords: ['microsoft'], factTag: 'guido_employer' },
-    { userMessage: "Who founded Microsoft?", expectedKeywords: ['bill gates', 'paul allen'], factTag: 'microsoft_founders' },
-    { userMessage: "What is the GDP ranking of Japan globally?", expectedKeywords: ['4'], factTag: 'japan_gdp' },
-    { userMessage: "When was the Japanese Yen introduced?", expectedKeywords: ['1871'], factTag: 'yen_intro' },
-    { userMessage: "What year was Python first released and what version is current?", expectedKeywords: ['1991', '3.12'], factTag: 'python_version' },
+    {
+      type: 'tell',
+      userMessage: "Hi, I'm Mei Tanaka. I'm a 32-year-old UX researcher at a health tech company called VitalMetrics.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_mei_job',
+    },
+    {
+      type: 'tell',
+      userMessage: "I live in Singapore and I commute to work by MRT. I've been at VitalMetrics for 4 years.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_location_tenure',
+    },
+    {
+      type: 'tell',
+      userMessage: "I'm currently learning Spanish — I'm at B1 level. I take lessons every Tuesday and Thursday with a tutor named Carlos.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_language_learning',
+    },
+    {
+      type: 'recall',
+      userMessage: "What's my job and where do I work?",
+      expectedKeywords: ['mei', 'ux', 'vitalmetrics'],
+      forbiddenKeywords: [],
+      factTag: 'recall_job',
+    },
+    {
+      type: 'tell',
+      userMessage: "My current project at work is called HealthSync — we're redesigning the patient onboarding flow to reduce drop-off rates.",
+      expectedKeywords: [],
+      forbiddenKeywords: [],
+      factTag: 'intro_project',
+    },
+    {
+      type: 'distractor',
+      userMessage: "What is the most spoken language in the world by native speakers?",
+      expectedKeywords: ['mandarin', 'chinese'],
+      forbiddenKeywords: [],
+      factTag: 'distractor_language',
+    },
+    {
+      type: 'recall',
+      userMessage: "What language am I learning and what level am I at?",
+      expectedKeywords: ['spanish', 'b1'],
+      forbiddenKeywords: [],
+      factTag: 'recall_language',
+    },
+    {
+      type: 'recall',
+      userMessage: "How long have I been at VitalMetrics and how do I commute?",
+      expectedKeywords: ['4', 'mrt', 'singapore'],
+      forbiddenKeywords: [],
+      factTag: 'recall_tenure_commute',
+    },
+    {
+      type: 'update',
+      userMessage: "I recently passed my Spanish B2 exam! I've moved up from B1 to B2 level now.",
+      expectedKeywords: ['b2', 'spanish', 'passed'],
+      forbiddenKeywords: [],
+      factTag: 'update_spanish_level',
+    },
+    {
+      type: 'distractor',
+      userMessage: "Can you explain what UX research involves?",
+      expectedKeywords: ['user', 'research'],
+      forbiddenKeywords: [],
+      factTag: 'distractor_ux',
+    },
+    {
+      type: 'recall',
+      userMessage: "What project am I working on at VitalMetrics?",
+      expectedKeywords: ['healthsync', 'onboarding'],
+      forbiddenKeywords: [],
+      factTag: 'recall_project',
+    },
+    {
+      type: 'update',
+      userMessage: "I've also just moved apartments — I'm now in the Jurong East neighbourhood of Singapore rather than central Singapore.",
+      expectedKeywords: ['jurong', 'moved'],
+      forbiddenKeywords: [],
+      factTag: 'update_location',
+    },
+    {
+      type: 'verify_update',
+      userMessage: "What's my current level in Spanish?",
+      expectedKeywords: ['b2'],
+      forbiddenKeywords: ['b1'],
+      factTag: 'verify_spanish',
+    },
+    {
+      type: 'recall',
+      userMessage: "What is my name and how old am I?",
+      expectedKeywords: ['mei', 'tanaka', '32'],
+      forbiddenKeywords: [],
+      factTag: 'recall_identity',
+    },
+    {
+      type: 'verify_update',
+      userMessage: "Where in Singapore am I living now?",
+      expectedKeywords: ['jurong'],
+      forbiddenKeywords: [],
+      factTag: 'verify_location',
+    },
   ],
 };
 
 export const ALL_SCENARIOS: TestScenario[] = [
-  personalFacts,
-  worldKnowledge,
-  entityRelations,
-  temporalSequence,
-  multiHop,
+  personalIntroduction,
+  teamBuilding,
+  projectTracking,
+  socialNetwork,
+  mixedUpdates,
 ];
 
 export function getScenario(id: string): TestScenario | undefined {

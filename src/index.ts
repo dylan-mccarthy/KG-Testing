@@ -73,7 +73,7 @@ async function runQuick(): Promise<void> {
   const result = await runner.runConfig(config, ALL_SCENARIOS);
   const reportPath = reporter.writeRunReport(result);
   console.log(`\n📄 Report written: ${reportPath}`);
-  console.log(`\n📊 Final: ${(result.avgKeywordAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
+  console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
 }
 
 async function runSingle(graphType: GraphType, contextTokens: number, scenarioId?: string): Promise<void> {
@@ -101,7 +101,7 @@ async function runSingle(graphType: GraphType, contextTokens: number, scenarioId
   const result = await runner.runConfig(config, scenarios);
   const reportPath = reporter.writeRunReport(result);
   console.log(`\n📄 Report written: ${reportPath}`);
-  console.log(`\n📊 Final: ${(result.avgKeywordAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
+  console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
 }
 
 async function runResearch(): Promise<void> {
@@ -137,8 +137,8 @@ async function runResearch(): Promise<void> {
   const summaryPath = reporter.writeSummaryReport(allResults, 'research_summary_final.md');
   console.log(`\n📋 Final summary written: ${summaryPath}`);
 
-  const best = allResults.reduce((b, r) => r.avgKeywordAccuracy > b.avgKeywordAccuracy ? r : b, allResults[0]);
-  console.log(`\n🏆 Best configuration: ${best.runLabel} — ${(best.avgKeywordAccuracy * 100).toFixed(1)}%`);
+  const best = allResults.reduce((b, r) => r.overallAccuracy > b.overallAccuracy ? r : b, allResults[0]);
+  console.log(`\n🏆 Best configuration: ${best.runLabel} — ${(best.overallAccuracy * 100).toFixed(1)}%`);
 }
 
 async function main(): Promise<void> {

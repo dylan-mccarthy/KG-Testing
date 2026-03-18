@@ -1,4 +1,4 @@
-// Markdown reporter: converts run results to structured markdown files
+// Markdown reporter: structured reports with per-turn-type breakdowns
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -12,21 +12,21 @@ export class MarkdownReporter {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  /** Write a single run result to its own markdown file */
   writeRunReport(result: RunResult): string {
     const filename = `${result.runLabel}.md`;
     const filepath = path.join(this.outputDir, filename);
-    const md = this.formatRunReport(result);
-    fs.writeFileSync(filepath, md, 'utf-8');
+    fs.writeFileSync(filepath, this.formatRunReport(result), 'utf-8');
     return filepath;
   }
 
-  /** Write a comparison summary across multiple runs */
   writeSummaryReport(results: RunResult[], filename = 'summary.md'): string {
     const filepath = path.join(this.outputDir, filename);
-    const md = this.formatSummaryReport(results);
-    fs.writeFileSync(filepath, md, 'utf-8');
+    fs.writeFileSync(filepath, this.formatSummaryReport(results), 'utf-8');
     return filepath;
+  }
+
+  private turnTypeEmoji(type: string): string {
+    return { tell: '📝', recall: '🔍', update: '✏️', verify_update: '✅', distractor: '💬' }[type] ?? '❓';
   }
 
   private formatRunReport(result: RunResult): string {
@@ -47,7 +47,6 @@ export class MarkdownReporter {
     lines.push(`| Max Context Tokens | ${cfg.agent.maxContextTokens} |`);
     lines.push(`| Top-K KG Results | ${cfg.agent.topK} |`);
     lines.push(`| Model | \`${cfg.agent.model}\` |`);
-    lines.push(`| Temperature | ${cfg.agent.temperature} |`);
     lines.push('');
 
     lines.push('## Overall Metrics\n');
@@ -55,7 +54,10 @@ export class MarkdownReporter {
     lines.push('|--------|-------|');
     lines.push(`| Total Scenarios | ${result.scenarioResults.length} |`);
     lines.push(`| Total Turns | ${result.totalTurns} |`);
-    lines.push(`| Avg Keyword Accuracy | ${(result.avgKeywordAccuracy * 100).toFixed(1)}% |`);
+    lines.push(`| Overall Accuracy | ${(result.overallAccuracy * 100).toFixed(1)}% |`);
+    lines.push(`| Recall Accuracy | ${(result.recallAccuracy * 100).toFixed(1)}% |`);
+    lines.push(`| Update Detection | ${(result.updateAccuracy * 100).toFixed(1)}% |`);
+    lines.push(`| Verify-Update Accuracy | ${(result.verifyAccuracy * 100).toFixed(1)}% |`);
     lines.push(`| Avg Latency | ${result.avgLatencyMs.toFixed(0)}ms |`);
     lines.push(`| Total Runtime | ${((result.endTime - result.startTime) / 1000).toFixed(1)}s |`);
     lines.push(`| Total Context Tokens | ${result.totalContextTokens} |`);
@@ -63,15 +65,22 @@ export class MarkdownReporter {
 
     for (const scenario of result.scenarioResults) {
       lines.push(`## Scenario: ${scenario.scenarioName}\n`);
-      lines.push(`**Category:** ${scenario.category} | **Accuracy:** ${(scenario.keywordAccuracy * 100).toFixed(1)}% | **Avg Latency:** ${scenario.avgLatencyMs.toFixed(0)}ms\n`);
-      lines.push(`**KG Stats:** ${scenario.graphStats.nodeCount} nodes, ${scenario.graphStats.edgeCount} edges, ${scenario.graphStats.relationTypes.join(', ') || 'n/a'}\n`);
+      lines.push(`**Category:** ${scenario.category} | **Overall:** ${(scenario.overallAccuracy * 100).toFixed(1)}% | **Recall:** ${(scenario.recallAccuracy * 100).toFixed(1)}% | **Verify-Update:** ${(scenario.verifyAccuracy * 100).toFixed(1)}%\n`);
+      lines.push(`**Final KG:** ${scenario.finalNodeCount} nodes, ${scenario.finalEdgeCount} edges | **Avg nodes/tell turn:** ${scenario.avgNodesAddedPerTell.toFixed(1)}\n`);
 
       lines.push('### Turn-by-Turn Results\n');
 
       for (const turn of scenario.turns) {
-        const statusEmoji = turn.keywordsFound ? '✅' : (turn.isDistractor ? '➖' : '❌');
-        lines.push(`#### Turn ${turn.turn} ${statusEmoji}\n`);
+        const emoji = this.turnTypeEmoji(turn.type);
+        const statusEmoji = turn.passed ? '✅' : '❌';
+        const kgDelta = turn.kgNodesAfter - turn.kgNodesBefore;
+
+        lines.push(`#### Turn ${turn.turn} ${emoji} \`[${turn.type}]\` ${statusEmoji}\n`);
         lines.push(`**User:** ${turn.userMessage}\n`);
+
+        if (turn.factsExtracted > 0) {
+          lines.push(`_📥 Facts extracted: **${turn.factsExtracted}** | KG nodes: ${turn.kgNodesBefore} → ${turn.kgNodesAfter} (+${kgDelta})_\n`);
+        }
 
         if (turn.kgMemoryInjected) {
           lines.push('<details><summary>📚 KG Memory Injected</summary>\n');
@@ -79,21 +88,20 @@ export class MarkdownReporter {
           lines.push(turn.kgMemoryInjected);
           lines.push('```');
           lines.push('</details>\n');
-        } else {
-          lines.push('_No KG results retrieved_\n');
         }
 
         lines.push(`**Assistant:** ${turn.assistantResponse}\n`);
 
-        if (!turn.isDistractor) {
-          lines.push(`**Expected Keywords:** \`${turn.expectedKeywords.join(', ')}\``);
-          lines.push(`**Found:** ${turn.keywordsFound ? '✅ Yes' : '❌ No'}`);
-          if (turn.missingKeywords.length > 0) {
-            lines.push(`**Missing:** \`${turn.missingKeywords.join(', ')}\``);
+        if (turn.type !== 'tell') {
+          if (turn.expectedKeywords.length > 0) {
+            lines.push(`**Expected:** \`${turn.expectedKeywords.join(', ')}\` → ${turn.missingKeywords.length === 0 ? '✅ All found' : `❌ Missing: \`${turn.missingKeywords.join(', ')}\``}`);
+          }
+          if (turn.forbiddenKeywords.length > 0) {
+            lines.push(`**Forbidden:** \`${turn.forbiddenKeywords.join(', ')}\` → ${turn.foundForbiddenKeywords.length === 0 ? '✅ None found' : `❌ Found: \`${turn.foundForbiddenKeywords.join(', ')}\``}`);
           }
         }
 
-        lines.push(`\n_Context tokens: ${turn.contextTokensUsed} | History dropped: ${turn.messagesDropped} | Latency: ${turn.latencyMs}ms_`);
+        lines.push(`\n_Context tokens: ${turn.contextTokensUsed} | Dropped: ${turn.messagesDropped} | Latency: ${turn.latencyMs}ms_`);
 
         if (turn.error) {
           lines.push(`\n> ⚠️ **Error:** ${turn.error}`);
@@ -108,24 +116,23 @@ export class MarkdownReporter {
   private formatSummaryReport(results: RunResult[]): string {
     const lines: string[] = [];
 
-    lines.push('# Knowledge Graph Testing — Summary Report');
-    lines.push(`\n_Generated: ${new Date().toISOString()}_\n`);
+    lines.push('# Knowledge Graph Testing — Phase 2 Summary');
+    lines.push('## Natural Conversation: Insert, Recall, Update, Verify\n');
+    lines.push(`_Generated: ${new Date().toISOString()}_\n`);
     lines.push(`Total runs: **${results.length}**\n`);
 
-    // Sort by accuracy
-    const sorted = [...results].sort((a, b) => b.avgKeywordAccuracy - a.avgKeywordAccuracy);
+    const sorted = [...results].sort((a, b) => b.overallAccuracy - a.overallAccuracy);
 
     lines.push('## Overall Leaderboard\n');
-    lines.push('| Rank | Run Label | Graph Type | Ctx Tokens | Accuracy | Avg Latency | Total Turns |');
-    lines.push('|------|-----------|------------|------------|----------|-------------|-------------|');
-
+    lines.push('| Rank | Run Label | Graph | Ctx | Overall | Recall | Update | Verify | Lat |');
+    lines.push('|------|-----------|-------|-----|---------|--------|--------|--------|-----|');
     for (let i = 0; i < sorted.length; i++) {
       const r = sorted[i];
-      lines.push(`| ${i + 1} | \`${r.runLabel}\` | ${r.config.graph.type} | ${r.config.agent.maxContextTokens} | ${(r.avgKeywordAccuracy * 100).toFixed(1)}% | ${r.avgLatencyMs.toFixed(0)}ms | ${r.totalTurns} |`);
+      lines.push(`| ${i + 1} | \`${r.runLabel}\` | ${r.config.graph.type} | ${r.config.agent.maxContextTokens} | ${(r.overallAccuracy * 100).toFixed(1)}% | ${(r.recallAccuracy * 100).toFixed(1)}% | ${(r.updateAccuracy * 100).toFixed(1)}% | ${(r.verifyAccuracy * 100).toFixed(1)}% | ${r.avgLatencyMs.toFixed(0)}ms |`);
     }
     lines.push('');
 
-    // Group by graph type
+    // By graph type
     lines.push('## Results by Graph Type\n');
     const byType: Record<string, RunResult[]> = {};
     for (const r of results) {
@@ -133,66 +140,72 @@ export class MarkdownReporter {
       if (!byType[t]) byType[t] = [];
       byType[t].push(r);
     }
-
+    lines.push('| Graph Type | Runs | Overall | Recall | Update | Verify | Avg Lat |');
+    lines.push('|------------|------|---------|--------|--------|--------|---------|');
     for (const [type, runs] of Object.entries(byType)) {
-      const avgAcc = runs.reduce((s, r) => s + r.avgKeywordAccuracy, 0) / runs.length;
-      const avgLat = runs.reduce((s, r) => s + r.avgLatencyMs, 0) / runs.length;
-      lines.push(`### ${type}`);
-      lines.push(`- Average Accuracy: **${(avgAcc * 100).toFixed(1)}%**`);
-      lines.push(`- Average Latency: **${avgLat.toFixed(0)}ms**`);
-      lines.push(`- Run Count: ${runs.length}\n`);
-    }
-
-    // Analysis by context limit
-    lines.push('## Effect of Context Window Size\n');
-    lines.push('| Context Tokens | Avg Accuracy | Avg Messages Dropped |');
-    lines.push('|----------------|-------------|----------------------|');
-    const byCtx: Record<number, { accuracy: number[]; dropped: number[] }> = {};
-    for (const r of results) {
-      const ctx = r.config.agent.maxContextTokens;
-      if (!byCtx[ctx]) byCtx[ctx] = { accuracy: [], dropped: [] };
-      byCtx[ctx].accuracy.push(r.avgKeywordAccuracy);
-      const totalDropped = r.scenarioResults.reduce((sum, s) =>
-        sum + s.turns.reduce((ts, t) => ts + t.messagesDropped, 0), 0);
-      byCtx[ctx].dropped.push(totalDropped / Math.max(r.totalTurns, 1));
-    }
-    for (const [ctx, data] of Object.entries(byCtx).sort(([a], [b]) => Number(a) - Number(b))) {
-      const acc = data.accuracy.reduce((s, x) => s + x, 0) / data.accuracy.length;
-      const drop = data.dropped.reduce((s, x) => s + x, 0) / data.dropped.length;
-      lines.push(`| ${ctx} | ${(acc * 100).toFixed(1)}% | ${drop.toFixed(2)} |`);
+      const avg = (fn: (r: RunResult) => number) => runs.reduce((s, r) => s + fn(r), 0) / runs.length;
+      lines.push(`| ${type} | ${runs.length} | ${(avg(r => r.overallAccuracy) * 100).toFixed(1)}% | ${(avg(r => r.recallAccuracy) * 100).toFixed(1)}% | ${(avg(r => r.updateAccuracy) * 100).toFixed(1)}% | ${(avg(r => r.verifyAccuracy) * 100).toFixed(1)}% | ${avg(r => r.avgLatencyMs).toFixed(0)}ms |`);
     }
     lines.push('');
 
-    // Per-scenario breakdown
-    lines.push('## Scenario Performance Across All Runs\n');
-    const scenarioIds = new Set<string>();
-    for (const r of results) for (const s of r.scenarioResults) scenarioIds.add(s.scenarioId);
+    // Context window effect
+    lines.push('## Effect of Context Window\n');
+    const byCtx: Record<number, RunResult[]> = {};
+    for (const r of results) {
+      const c = r.config.agent.maxContextTokens;
+      if (!byCtx[c]) byCtx[c] = [];
+      byCtx[c].push(r);
+    }
+    lines.push('| Context Tokens | Runs | Overall | Recall | Verify-Update |');
+    lines.push('|----------------|------|---------|--------|---------------|');
+    for (const [ctx, runs] of Object.entries(byCtx).sort(([a], [b]) => Number(a) - Number(b))) {
+      const avg = (fn: (r: RunResult) => number) => runs.reduce((s, r) => s + fn(r), 0) / runs.length;
+      lines.push(`| ${ctx} | ${runs.length} | ${(avg(r => r.overallAccuracy) * 100).toFixed(1)}% | ${(avg(r => r.recallAccuracy) * 100).toFixed(1)}% | ${(avg(r => r.verifyAccuracy) * 100).toFixed(1)}% |`);
+    }
+    lines.push('');
 
+    // KG growth metrics
+    lines.push('## Knowledge Graph Insertion Metrics\n');
+    lines.push('| Graph Type | Avg Nodes/Tell Turn | Avg Final Nodes | Avg Final Edges |');
+    lines.push('|------------|---------------------|-----------------|-----------------|');
+    for (const [type, runs] of Object.entries(byType)) {
+      const allScenarios = runs.flatMap(r => r.scenarioResults);
+      const avgPerTell = allScenarios.reduce((s, r) => s + r.avgNodesAddedPerTell, 0) / allScenarios.length;
+      const avgNodes = allScenarios.reduce((s, r) => s + r.finalNodeCount, 0) / allScenarios.length;
+      const avgEdges = allScenarios.reduce((s, r) => s + r.finalEdgeCount, 0) / allScenarios.length;
+      lines.push(`| ${type} | ${avgPerTell.toFixed(2)} | ${avgNodes.toFixed(1)} | ${avgEdges.toFixed(1)} |`);
+    }
+    lines.push('');
+
+    // Per scenario breakdown
+    lines.push('## Per-Scenario Performance\n');
+    const scenarioIds = [...new Set(results.flatMap(r => r.scenarioResults.map(s => s.scenarioId)))];
     for (const sid of scenarioIds) {
-      const scenarioRuns = results.flatMap(r => r.scenarioResults.filter(s => s.scenarioId === sid));
-      if (!scenarioRuns.length) continue;
-      const avgAcc = scenarioRuns.reduce((s, r) => s + r.keywordAccuracy, 0) / scenarioRuns.length;
-      const best = scenarioRuns.reduce((best, r) => r.keywordAccuracy > best.keywordAccuracy ? r : best, scenarioRuns[0]);
+      const allRuns = results.flatMap(r => r.scenarioResults.filter(s => s.scenarioId === sid));
+      if (!allRuns.length) continue;
+      const avgOverall = allRuns.reduce((s, r) => s + r.overallAccuracy, 0) / allRuns.length;
+      const avgRecall = allRuns.reduce((s, r) => s + r.recallAccuracy, 0) / allRuns.length;
+      const avgVerify = allRuns.reduce((s, r) => s + r.verifyAccuracy, 0) / allRuns.length;
+      const best = allRuns.reduce((b, r) => r.overallAccuracy > b.overallAccuracy ? r : b, allRuns[0]);
       lines.push(`### ${sid}`);
-      lines.push(`- Average accuracy: **${(avgAcc * 100).toFixed(1)}%**`);
-      lines.push(`- Best run: \`${best.runLabel}\` (${(best.keywordAccuracy * 100).toFixed(1)}%)\n`);
+      lines.push(`- Overall: **${(avgOverall * 100).toFixed(1)}%** | Recall: **${(avgRecall * 100).toFixed(1)}%** | Verify-Update: **${(avgVerify * 100).toFixed(1)}%**`);
+      lines.push(`- Best run: \`${best.runLabel}\` (${(best.overallAccuracy * 100).toFixed(1)}%)\n`);
     }
 
     // Key findings
     lines.push('## Key Findings\n');
-    const bestRun = sorted[0];
-    const worstRun = sorted[sorted.length - 1];
-    lines.push(`- **Best performing configuration:** \`${bestRun?.runLabel}\` — ${(bestRun?.avgKeywordAccuracy * 100).toFixed(1)}% accuracy`);
-    lines.push(`- **Worst performing configuration:** \`${worstRun?.runLabel}\` — ${(worstRun?.avgKeywordAccuracy * 100).toFixed(1)}% accuracy`);
+    const best = sorted[0];
+    const worst = sorted[sorted.length - 1];
+    lines.push(`- **Best:** \`${best?.runLabel}\` — ${(best?.overallAccuracy * 100).toFixed(1)}% overall (recall: ${(best?.recallAccuracy * 100).toFixed(1)}%, verify: ${(best?.verifyAccuracy * 100).toFixed(1)}%)`);
+    lines.push(`- **Worst:** \`${worst?.runLabel}\` — ${(worst?.overallAccuracy * 100).toFixed(1)}%`);
 
-    const ctxEntries = Object.entries(byCtx).sort(([a], [b]) => Number(a) - Number(b));
-    if (ctxEntries.length > 1) {
-      const smallCtx = ctxEntries[0];
-      const largeCtx = ctxEntries[ctxEntries.length - 1];
-      const smallAcc = smallCtx[1].accuracy.reduce((s, x) => s + x, 0) / smallCtx[1].accuracy.length;
-      const largeAcc = largeCtx[1].accuracy.reduce((s, x) => s + x, 0) / largeCtx[1].accuracy.length;
-      const diff = ((largeAcc - smallAcc) * 100).toFixed(1);
-      lines.push(`- **Context window impact:** Larger context (${largeCtx[0]} tokens) vs smaller (${smallCtx[0]} tokens) = ${diff}% accuracy difference`);
+    const ctxNums = Object.keys(byCtx).map(Number).sort((a, b) => a - b);
+    if (ctxNums.length > 1) {
+      const small = byCtx[ctxNums[0]];
+      const large = byCtx[ctxNums[ctxNums.length - 1]];
+      const smallAcc = small.reduce((s, r) => s + r.verifyAccuracy, 0) / small.length;
+      const largeAcc = large.reduce((s, r) => s + r.verifyAccuracy, 0) / large.length;
+      lines.push(`- **Context window effect on verify-update:** ${ctxNums[0]} tokens = ${(smallAcc * 100).toFixed(1)}% vs ${ctxNums[ctxNums.length - 1]} tokens = ${(largeAcc * 100).toFixed(1)}%`);
     }
     lines.push('');
 

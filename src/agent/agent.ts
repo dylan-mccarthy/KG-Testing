@@ -2,6 +2,7 @@
 
 import { OllamaClient, ChatMessage } from './ollama';
 import { ContextManager } from './context';
+import { FactExtractor, ExtractionResult } from './extractor';
 import { IKnowledgeGraph, NodeData } from '../graphs';
 import { AgentConfig } from '../config';
 
@@ -15,6 +16,9 @@ export interface TurnRecord {
   contextTokensUsed: number;
   messagesDropped: number;
   latencyMs: number;
+  extraction?: ExtractionResult;
+  kgNodesBefore: number;
+  kgNodesAfter: number;
   error?: string;
 }
 
@@ -26,6 +30,7 @@ export interface AgentSession {
 }
 
 const DEFAULT_SYSTEM_PROMPT = `You are a helpful AI assistant with access to a knowledge graph memory system.
+When the user shares information about themselves or others, acknowledge it naturally and remember it.
 When answering questions, prioritize any retrieved knowledge graph facts provided to you.
 For general knowledge questions not covered by the KG facts, use your own knowledge to answer.
 Be concise and accurate. Do not make up information about specific people or entities unless supported by the provided facts.`;
@@ -33,6 +38,7 @@ Be concise and accurate. Do not make up information about specific people or ent
 export class KGAgent {
   private client: OllamaClient;
   private contextManager: ContextManager;
+  private extractor: FactExtractor;
   private graph: IKnowledgeGraph;
   private config: AgentConfig;
   private history: ChatMessage[] = [];
@@ -50,6 +56,7 @@ export class KGAgent {
       config.maxContextTokens,
       config.systemPrompt || DEFAULT_SYSTEM_PROMPT
     );
+    this.extractor = new FactExtractor(this.client);
     this.session = {
       sessionId,
       graphType: graph.name,
@@ -135,9 +142,10 @@ export class KGAgent {
     return { nodes: topNodes, memoryText: lines.join('\n') };
   }
 
-  async chat(userMessage: string): Promise<TurnRecord> {
+  async chat(userMessage: string, extractFacts = true): Promise<TurnRecord> {
     const turnStart = Date.now();
     const turnNum = this.session.turns.length + 1;
+    const kgNodesBefore = this.graph.getStats().nodeCount;
 
     let record: TurnRecord = {
       turn: turnNum,
@@ -149,10 +157,26 @@ export class KGAgent {
       contextTokensUsed: 0,
       messagesDropped: 0,
       latencyMs: 0,
+      kgNodesBefore,
+      kgNodesAfter: kgNodesBefore,
     };
 
     try {
-      // Query KG for relevant memory
+      // Step 1: Extract facts from user message and store in KG
+      if (extractFacts) {
+        const recentContext = this.history.slice(-4)
+          .map(m => `${m.role}: ${m.content}`)
+          .join('\n');
+        const facts = await this.extractor.extract(userMessage, recentContext);
+        if (facts.length > 0) {
+          const extraction = this.extractor.storeInGraph(facts, this.graph);
+          record.extraction = extraction;
+        }
+      }
+
+      record.kgNodesAfter = this.graph.getStats().nodeCount;
+
+      // Step 2: Query KG for relevant memory
       const queryTerms = this.extractQueryTerms(userMessage);
       record.kgQuery = queryTerms;
       const { nodes, memoryText } = this.queryKG(userMessage);
@@ -169,8 +193,11 @@ export class KGAgent {
       record.contextTokensUsed = ctx.totalTokens;
       this.session.totalTokensUsed += ctx.totalTokens;
 
-      // Call LLM
-      const response = await this.client.chat(ctx.messages, { temperature: this.config.temperature });
+      // Call LLM — disable thinking to keep responses fast (we test recall, not reasoning depth)
+      const response = await this.client.chat(ctx.messages, {
+        temperature: this.config.temperature,
+        noThink: true,
+      });
       record.assistantResponse = response.message?.content ?? '';
 
       // Update history

@@ -65,37 +65,33 @@ export const DEFAULT_RUN_CONFIG: RunConfig = {
   runLabel: 'default',
 };
 
-/** Build all parameter combinations for the research sweep */
+/** Build all parameter combinations for the research sweep.
+ * Phase 2 focuses on graph type × context window (depth/subTrees don't affect
+ * extraction-populated graphs meaningfully — same depth is kept for consistency). */
 export function buildResearchMatrix(): RunConfig[] {
   const configs: RunConfig[] = [];
   const graphTypes: GraphType[] = ['simple', 'hierarchical', 'multi', 'weighted'];
-  const depths = [2, 4];
-  const subTrees = [2, 4];
   const contextLimits = [400, 800, 1500];
 
   for (const type of graphTypes) {
-    for (const depth of depths) {
-      for (const trees of subTrees) {
-        for (const maxCtx of contextLimits) {
-          configs.push({
-            graph: {
-              type,
-              graphDepth: depth,
-              subTrees: trees,
-              multiGraph: type === 'multi',
-              weightedEdges: type === 'weighted',
-              directed: type === 'hierarchical',
-            },
-            agent: {
-              ...DEFAULT_AGENT_CONFIG,
-              maxContextTokens: maxCtx,
-            },
-            maxTurns: 10,
-            outputDir: './results',
-            runLabel: `${type}_depth${depth}_trees${trees}_ctx${maxCtx}`,
-          });
-        }
-      }
+    for (const maxCtx of contextLimits) {
+      configs.push({
+        graph: {
+          type,
+          graphDepth: 3,
+          subTrees: 3,
+          multiGraph: type === 'multi',
+          weightedEdges: type === 'weighted',
+          directed: type === 'hierarchical',
+        },
+        agent: {
+          ...DEFAULT_AGENT_CONFIG,
+          maxContextTokens: maxCtx,
+        },
+        maxTurns: 20,
+        outputDir: './results',
+        runLabel: `${type}_ctx${maxCtx}`,
+      });
     }
   }
   return configs;
