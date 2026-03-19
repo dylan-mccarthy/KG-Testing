@@ -3,6 +3,7 @@
 import { RunConfig } from '../config';
 import { createGraph, GraphStats } from '../graphs';
 import { KGAgent, TurnRecord } from '../agent';
+import { EmbeddingsClient, VectorStore, RAGAgent } from '../rag';
 import { TestScenario, TurnType, ALL_SCENARIOS } from '../scenarios';
 
 export interface TurnResult {
@@ -150,7 +151,7 @@ export class TestRunner {
 
   async runScenario(
     scenario: TestScenario,
-    agent: KGAgent,
+    agent: KGAgent | RAGAgent,
     runLabel: string
   ): Promise<ScenarioResult> {
     this.log(`  📋 Scenario: ${scenario.name}`);
@@ -215,7 +216,9 @@ export class TestRunner {
     const distractorTurns = byType('distractor');
     const evalTurns = turnResults.filter(t => t.type !== 'tell');
 
-    const graphStats = agent.getGraph().getStats();
+    const graphStats = 'getGraph' in agent
+      ? agent.getGraph().getStats()
+      : { nodeCount: 0, edgeCount: 0, maxDepth: 0, avgDegree: 0, relationTypes: [] };
     const tellTurns = byType('tell');
     const totalKgGrowth = tellTurns.reduce((s, t) => s + (t.kgNodesAfter - t.kgNodesBefore), 0);
 
@@ -243,17 +246,30 @@ export class TestRunner {
 
   async runConfig(config: RunConfig, scenarios?: TestScenario[]): Promise<RunResult> {
     const startTime = Date.now();
+    const memLabel = config.memoryType ?? config.graph.type;
     this.log(`\n🔬 Run: ${config.runLabel}`);
-    this.log(`   Graph: ${config.graph.type} | Depth: ${config.graph.graphDepth} | Trees: ${config.graph.subTrees} | Ctx: ${config.agent.maxContextTokens}`);
+    this.log(`   Memory: ${memLabel} | Ctx: ${config.agent.maxContextTokens}`);
 
     const scenariosToRun = scenarios || ALL_SCENARIOS;
     const scenarioResults: ScenarioResult[] = [];
     const errors: string[] = [];
 
+    const isRag = config.memoryType === 'rag';
+
     for (const scenario of scenariosToRun) {
       try {
-        const graph = createGraph(config.graph, `${config.runLabel}_${scenario.id}`);
-        const agent = new KGAgent(graph, config.agent, `${config.runLabel}_${scenario.id}`);
+        let agent: KGAgent | RAGAgent;
+        if (isRag) {
+          const embedder = new EmbeddingsClient({
+            endpoint: config.agent.ollamaEndpoint,
+            model: config.agent.embeddingModel ?? 'nomic-embed-text',
+          });
+          const store = new VectorStore(embedder);
+          agent = new RAGAgent(store, config.agent, `${config.runLabel}_${scenario.id}`);
+        } else {
+          const graph = createGraph(config.graph, `${config.runLabel}_${scenario.id}`);
+          agent = new KGAgent(graph, config.agent, `${config.runLabel}_${scenario.id}`);
+        }
         const result = await this.runScenario(scenario, agent, config.runLabel);
         scenarioResults.push(result);
       } catch (err) {

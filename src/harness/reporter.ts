@@ -116,7 +116,7 @@ export class MarkdownReporter {
   private formatSummaryReport(results: RunResult[]): string {
     const lines: string[] = [];
 
-    lines.push('# Knowledge Graph Testing — Phase 2 Summary');
+    lines.push('# KG vs RAG Memory Testing — Summary');
     lines.push('## Natural Conversation: Insert, Recall, Update, Verify\n');
     lines.push(`_Generated: ${new Date().toISOString()}_\n`);
     lines.push(`Total runs: **${results.length}**\n`);
@@ -124,24 +124,49 @@ export class MarkdownReporter {
     const sorted = [...results].sort((a, b) => b.overallAccuracy - a.overallAccuracy);
 
     lines.push('## Overall Leaderboard\n');
-    lines.push('| Rank | Run Label | Graph | Ctx | Overall | Recall | Update | Verify | Lat |');
-    lines.push('|------|-----------|-------|-----|---------|--------|--------|--------|-----|');
+    lines.push('| Rank | Run Label | Memory | Ctx | Overall | Recall | Update | Verify | Lat |');
+    lines.push('|------|-----------|--------|-----|---------|--------|--------|--------|-----|');
     for (let i = 0; i < sorted.length; i++) {
       const r = sorted[i];
-      lines.push(`| ${i + 1} | \`${r.runLabel}\` | ${r.config.graph.type} | ${r.config.agent.maxContextTokens} | ${(r.overallAccuracy * 100).toFixed(1)}% | ${(r.recallAccuracy * 100).toFixed(1)}% | ${(r.updateAccuracy * 100).toFixed(1)}% | ${(r.verifyAccuracy * 100).toFixed(1)}% | ${r.avgLatencyMs.toFixed(0)}ms |`);
+      const memType = r.config.memoryType ?? r.config.graph.type;
+      lines.push(`| ${i + 1} | \`${r.runLabel}\` | ${memType} | ${r.config.agent.maxContextTokens} | ${(r.overallAccuracy * 100).toFixed(1)}% | ${(r.recallAccuracy * 100).toFixed(1)}% | ${(r.updateAccuracy * 100).toFixed(1)}% | ${(r.verifyAccuracy * 100).toFixed(1)}% | ${r.avgLatencyMs.toFixed(0)}ms |`);
     }
     lines.push('');
 
-    // By graph type
-    lines.push('## Results by Graph Type\n');
+    // KG vs RAG comparison
+    const ragResults = results.filter(r => r.config.memoryType === 'rag');
+    const kgResults = results.filter(r => r.config.memoryType !== 'rag');
+    if (ragResults.length > 0 && kgResults.length > 0) {
+      lines.push('## KG vs RAG Direct Comparison\n');
+      lines.push('| Context | KG Overall | KG Recall | KG Verify | RAG Overall | RAG Recall | RAG Verify | Winner |');
+      lines.push('|---------|-----------|-----------|-----------|-------------|------------|------------|--------|');
+      const ctxValues = [...new Set(results.map(r => r.config.agent.maxContextTokens))].sort((a, b) => a - b);
+      for (const ctx of ctxValues) {
+        const kgCtx = kgResults.filter(r => r.config.agent.maxContextTokens === ctx);
+        const ragCtx = ragResults.filter(r => r.config.agent.maxContextTokens === ctx);
+        if (!kgCtx.length || !ragCtx.length) continue;
+        const kgOverall = kgCtx.reduce((s, r) => s + r.overallAccuracy, 0) / kgCtx.length;
+        const kgRecall = kgCtx.reduce((s, r) => s + r.recallAccuracy, 0) / kgCtx.length;
+        const kgVerify = kgCtx.reduce((s, r) => s + r.verifyAccuracy, 0) / kgCtx.length;
+        const ragOverall = ragCtx.reduce((s, r) => s + r.overallAccuracy, 0) / ragCtx.length;
+        const ragRecall = ragCtx.reduce((s, r) => s + r.recallAccuracy, 0) / ragCtx.length;
+        const ragVerify = ragCtx.reduce((s, r) => s + r.verifyAccuracy, 0) / ragCtx.length;
+        const winner = kgOverall > ragOverall ? '🧠 KG' : ragOverall > kgOverall ? '📚 RAG' : '🤝 Tie';
+        lines.push(`| ${ctx} | ${(kgOverall * 100).toFixed(1)}% | ${(kgRecall * 100).toFixed(1)}% | ${(kgVerify * 100).toFixed(1)}% | ${(ragOverall * 100).toFixed(1)}% | ${(ragRecall * 100).toFixed(1)}% | ${(ragVerify * 100).toFixed(1)}% | ${winner} |`);
+      }
+      lines.push('');
+    }
+
+    // By memory type
+    lines.push('## Results by Memory Type\n');
     const byType: Record<string, RunResult[]> = {};
     for (const r of results) {
-      const t = r.config.graph.type;
+      const t = r.config.memoryType ?? r.config.graph.type;
       if (!byType[t]) byType[t] = [];
       byType[t].push(r);
     }
-    lines.push('| Graph Type | Runs | Overall | Recall | Update | Verify | Avg Lat |');
-    lines.push('|------------|------|---------|--------|--------|--------|---------|');
+    lines.push('| Memory Type | Runs | Overall | Recall | Update | Verify | Avg Lat |');
+    lines.push('|-------------|------|---------|--------|--------|--------|---------|');
     for (const [type, runs] of Object.entries(byType)) {
       const avg = (fn: (r: RunResult) => number) => runs.reduce((s, r) => s + fn(r), 0) / runs.length;
       lines.push(`| ${type} | ${runs.length} | ${(avg(r => r.overallAccuracy) * 100).toFixed(1)}% | ${(avg(r => r.recallAccuracy) * 100).toFixed(1)}% | ${(avg(r => r.updateAccuracy) * 100).toFixed(1)}% | ${(avg(r => r.verifyAccuracy) * 100).toFixed(1)}% | ${avg(r => r.avgLatencyMs).toFixed(0)}ms |`);
@@ -164,16 +189,16 @@ export class MarkdownReporter {
     }
     lines.push('');
 
-    // KG growth metrics
-    lines.push('## Knowledge Graph Insertion Metrics\n');
-    lines.push('| Graph Type | Avg Nodes/Tell Turn | Avg Final Nodes | Avg Final Edges |');
-    lines.push('|------------|---------------------|-----------------|-----------------|');
+    // Memory insertion metrics (KG nodes / RAG chunks)
+    lines.push('## Memory Insertion Metrics\n');
+    lines.push('| Memory Type | Avg Items/Tell Turn | Avg Final Items |');
+    lines.push('|-------------|---------------------|-----------------|');
     for (const [type, runs] of Object.entries(byType)) {
       const allScenarios = runs.flatMap(r => r.scenarioResults);
       const avgPerTell = allScenarios.reduce((s, r) => s + r.avgNodesAddedPerTell, 0) / allScenarios.length;
       const avgNodes = allScenarios.reduce((s, r) => s + r.finalNodeCount, 0) / allScenarios.length;
-      const avgEdges = allScenarios.reduce((s, r) => s + r.finalEdgeCount, 0) / allScenarios.length;
-      lines.push(`| ${type} | ${avgPerTell.toFixed(2)} | ${avgNodes.toFixed(1)} | ${avgEdges.toFixed(1)} |`);
+      const itemLabel = type === 'rag' ? 'chunks' : 'nodes';
+      lines.push(`| ${type} | ${avgPerTell.toFixed(2)} ${itemLabel}/turn | ${avgNodes.toFixed(1)} ${itemLabel} |`);
     }
     lines.push('');
 
@@ -206,6 +231,13 @@ export class MarkdownReporter {
       const smallAcc = small.reduce((s, r) => s + r.verifyAccuracy, 0) / small.length;
       const largeAcc = large.reduce((s, r) => s + r.verifyAccuracy, 0) / large.length;
       lines.push(`- **Context window effect on verify-update:** ${ctxNums[0]} tokens = ${(smallAcc * 100).toFixed(1)}% vs ${ctxNums[ctxNums.length - 1]} tokens = ${(largeAcc * 100).toFixed(1)}%`);
+    }
+    if (ragResults.length > 0 && kgResults.length > 0) {
+      const avgKg = kgResults.reduce((s, r) => s + r.overallAccuracy, 0) / kgResults.length;
+      const avgRag = ragResults.reduce((s, r) => s + r.overallAccuracy, 0) / ragResults.length;
+      const diff = ((avgKg - avgRag) * 100).toFixed(1);
+      const leader = avgKg > avgRag ? 'KG' : 'RAG';
+      lines.push(`- **KG vs RAG (all contexts avg):** KG = ${(avgKg * 100).toFixed(1)}% vs RAG = ${(avgRag * 100).toFixed(1)}% — **${leader} leads by ${Math.abs(parseFloat(diff)).toFixed(1)}%**`);
     }
     lines.push('');
 

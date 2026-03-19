@@ -1,6 +1,6 @@
 # Run Report: multi_ctx400
 
-_Generated: 2026-03-19T13:08:19.239Z_
+_Generated: 2026-03-19T22:45:47.434Z_
 
 ## Configuration
 
@@ -21,19 +21,19 @@ _Generated: 2026-03-19T13:08:19.239Z_
 |--------|-------|
 | Total Scenarios | 5 |
 | Total Turns | 75 |
-| Overall Accuracy | 86.9% |
-| Recall Accuracy | 79.0% |
+| Overall Accuracy | 83.3% |
+| Recall Accuracy | 71.0% |
 | Update Detection | 100.0% |
 | Verify-Update Accuracy | 80.0% |
-| Avg Latency | 983ms |
-| Total Runtime | 73.7s |
-| Total Context Tokens | 23593 |
+| Avg Latency | 946ms |
+| Total Runtime | 71.0s |
+| Total Context Tokens | 23147 |
 
 ## Scenario: Personal Introduction & Career Update
 
-**Category:** personal | **Overall:** 100.0% | **Recall:** 100.0% | **Verify-Update:** 100.0%
+**Category:** personal | **Overall:** 90.9% | **Recall:** 80.0% | **Verify-Update:** 100.0%
 
-**Final KG:** 3 nodes, 1 edges | **Avg nodes/tell turn:** 0.8
+**Final KG:** 3 nodes, 0 edges | **Avg nodes/tell turn:** 0.5
 
 ### Turn-by-Turn Results
 
@@ -50,10 +50,10 @@ _📥 Facts extracted: **2** | KG nodes: 0 → 1 (+1)_
 ```
 </details>
 
-**Assistant:** Hello Jordan! I've noted that you are 29 years old. Is there anything specific you'd like to discuss or need help with?
+**Assistant:** Hello Jordan! It's nice to meet you. I've noted that you're 29 years old. Is there anything specific you'd like to chat about or need help with?
 
 
-_Context tokens: 176 | Dropped: 0 | Latency: 930ms_
+_Context tokens: 176 | Dropped: 0 | Latency: 984ms_
 
 #### Turn 2 📝 `[tell]` ✅
 
@@ -68,10 +68,10 @@ _📥 Facts extracted: **3** | KG nodes: 1 → 1 (+0)_
 ```
 </details>
 
-**Assistant:** Got it, Jordan. I've updated my records: you work as a data analyst at DataStream Inc and have been there for 3 years. Is there anything specific about your role or the company you'd like to explore?
+**Assistant:** Got it, Jordan. I've added that you work as a data analyst at DataStream Inc with a tenure of 3 years. How's your work going?
 
 
-_Context tokens: 252 | Dropped: 0 | Latency: 1274ms_
+_Context tokens: 258 | Dropped: 0 | Latency: 1191ms_
 
 #### Turn 3 📝 `[tell]` ✅
 
@@ -86,19 +86,10 @@ _📥 Facts extracted: **3** | KG nodes: 1 → 1 (+0)_
 ```
 </details>
 
-**Assistant:** Noted, Jordan. I've added that you live in Austin, Texas, and your favorite hobby is Brazilian jiu-jitsu, where you train four times a week.
-
-Here's a quick summary of your profile based on our conversation:
-- **Name:** Jordan Blake
-- **Age:** 29
-- **Job:** Data Analyst at DataStream Inc (3 years tenure)
-- **Location:** Austin, Texas
-- **Hobby:** Brazilian jiu-jitsu (4x/week)
-
-Is there anything else you'd like to share or discuss?
+**Assistant:** Noted, Jordan. I've updated your profile to include living in Austin, Texas, and your passion for Brazilian jiu-jitsu, where you train four times a week. It sounds like a great way to stay active and balanced!
 
 
-_Context tokens: 339 | Dropped: 1 | Latency: 1917ms_
+_Context tokens: 344 | Dropped: 0 | Latency: 1384ms_
 
 #### Turn 4 🔍 `[recall]` ✅
 
@@ -111,11 +102,11 @@ _Context tokens: 339 | Dropped: 1 | Latency: 1917ms_
 ```
 </details>
 
-**Assistant:** Your name is **Jordan Blake**, and you are **29** years old.
+**Assistant:** Your name is Jordan Blake, and you are 29 years old.
 
 **Expected:** `jordan, blake, 29` → ✅ All found
 
-_Context tokens: 349 | Dropped: 4 | Latency: 365ms_
+_Context tokens: 329 | Dropped: 3 | Latency: 335ms_
 
 #### Turn 5 💬 `[distractor]` ✅
 
@@ -128,11 +119,11 @@ _Context tokens: 349 | Dropped: 4 | Latency: 365ms_
 ```
 </details>
 
-**Assistant:** The **Argentina** national team won the 2022 FIFA World Cup, defeating France 4–2 in the final match held on December 18, 2022.
+**Assistant:** Argentina won the FIFA World Cup in 2022, defeating France in the final match.
 
 **Expected:** `argentina` → ✅ All found
 
-_Context tokens: 241 | Dropped: 6 | Latency: 515ms_
+_Context tokens: 323 | Dropped: 4 | Latency: 379ms_
 
 #### Turn 6 🔍 `[recall]` ✅
 
@@ -145,34 +136,32 @@ _Context tokens: 241 | Dropped: 6 | Latency: 515ms_
 ```
 </details>
 
-**Assistant:** You work at **DataStream Inc** in **Austin, Texas**, where your role is **data analyst**.
+**Assistant:** You work at DataStream Inc as a data analyst, where you have been employed for the past three years.
 
 **Expected:** `datastream, analyst` → ✅ All found
 
-_Context tokens: 292 | Dropped: 6 | Latency: 377ms_
+_Context tokens: 335 | Dropped: 5 | Latency: 392ms_
 
 #### Turn 7 📝 `[tell]` ✅
 
 **User:** I also have a golden retriever named Biscuit who is 2 years old.
 
-_📥 Facts extracted: **2** | KG nodes: 1 → 3 (+2)_
+_📥 Facts extracted: **2** | KG nodes: 1 → 2 (+1)_
 
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Biscuit: age: 2 years old
-- user: pet: golden retriever
-  → name: Biscuit
+- Biscuit: species: golden retriever, age: 2 years old
 - Jordan Blake: name: Jordan Blake, age: 29, job: data analyst, company: DataStream Inc, tenure: 3 years, location: Austin, Texas, hobby: Brazilian jiu-jitsu, training_frequency: 4 times a week
 ```
 </details>
 
-**Assistant:** That's great! Your golden retriever, **Biscuit**, is **2 years old**.
+**Assistant:** That's great! Biscuit is your 2-year-old golden retriever.
 
 
-_Context tokens: 346 | Dropped: 7 | Latency: 1070ms_
+_Context tokens: 340 | Dropped: 6 | Latency: 939ms_
 
-#### Turn 8 🔍 `[recall]` ✅
+#### Turn 8 🔍 `[recall]` ❌
 
 **User:** What sport do I practise and how often?
 
@@ -180,63 +169,51 @@ _Context tokens: 346 | Dropped: 7 | Latency: 1070ms_
 
 ```
 - Jordan Blake: name: Jordan Blake, age: 29, job: data analyst, company: DataStream Inc, tenure: 3 years, location: Austin, Texas, hobby: Brazilian jiu-jitsu, training_frequency: 4 times a week
-- Biscuit: age: 2 years old
 ```
 </details>
 
-**Assistant:** You practice **Brazilian jiu-jitsu** **4 times a week**.
+**Assistant:** You practice Brazilian jiu-jitsu four times a week.
 
-**Expected:** `jiu-jitsu, 4` → ✅ All found
+**Expected:** `jiu-jitsu, 4` → ❌ Missing: `4`
 
-_Context tokens: 338 | Dropped: 9 | Latency: 350ms_
+_Context tokens: 348 | Dropped: 7 | Latency: 322ms_
 
 #### Turn 9 💬 `[distractor]` ✅
 
 **User:** Can you explain what a neural network is in simple terms?
 
-<details><summary>📚 KG Memory Injected</summary>
+**Assistant:** A neural network is a computing system inspired by the human brain, designed to recognize patterns and make decisions.
 
-```
-- Biscuit: age: 2 years old
-```
-</details>
+Think of it like a team of workers:
+*   **Input:** You feed it data (like pictures of cats).
+*   **Processing:** It passes that data through many layers of interconnected "neurons" (simple processing units). Each neuron looks at specific features, like edges or shapes, and combines them.
+*   **Output:** After processing through all layers, it produces a result, such as "This is a cat."
 
-**Assistant:** A **neural network** is a computing system inspired by the human brain, designed to recognize patterns and make decisions.
-
-Think of it like this:
-*   **Structure**: It consists of layers of interconnected "nodes" (like neurons).
-*   **Learning**: Just as you learn from experience, a neural network learns by analyzing large amounts of data. It adjusts its internal connections to minimize errors in its predictions.
-*   **Application**: It's widely used in tasks like image recognition, speech processing, and playing games, where traditional programming rules aren't enough.
-
-In simple terms, it's a machine that gets smarter the more data it processes, mimicking how our brains learn.
+The key is that the network learns by adjusting its internal connections based on mistakes it makes, eventually becoming very good at its specific task.
 
 **Expected:** `neural, network` → ✅ All found
 
-_Context tokens: 339 | Dropped: 8 | Latency: 1371ms_
+_Context tokens: 326 | Dropped: 6 | Latency: 1332ms_
 
 #### Turn 10 ✏️ `[update]` ✅
 
 **User:** Great news — I just got promoted! I'm now a Senior Data Analyst at DataStream.
 
-_📥 Facts extracted: **2** | KG nodes: 3 → 3 (+0)_
+_📥 Facts extracted: **2** | KG nodes: 2 → 3 (+1)_
 
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- user: pet: golden retriever, job: Senior Data Analyst, company: DataStream
-  → name: Biscuit
-- Biscuit: age: 2 years old
+- user: job: Senior Data Analyst, company: DataStream
 - Jordan Blake: name: Jordan Blake, age: 29, job: data analyst, company: DataStream Inc, tenure: 3 years, location: Austin, Texas, hobby: Brazilian jiu-jitsu, training_frequency: 4 times a week
 ```
 </details>
 
-**Assistant:** That's fantastic news! 🎉 Congratulations on your promotion to Senior Data Analyst at DataStream.
-
-I already have you in my records as a Senior Data Analyst at DataStream, so it looks like my memory was just ahead of the curve! How are you feeling about the new role?
+**Assistant:** That's fantastic news! Congratulations on your promotion to Senior Data Analyst at DataStream. It's great to hear about your career growth.
 
 **Expected:** `senior, analyst, promoted` → ❌ Missing: `promoted`
 
-_Context tokens: 251 | Dropped: 18 | Latency: 1277ms_
+_Context tokens: 234 | Dropped: 18 | Latency: 1012ms_
 
 #### Turn 11 🔍 `[recall]` ✅
 
@@ -245,35 +222,26 @@ _Context tokens: 251 | Dropped: 18 | Latency: 1277ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- user: pet: golden retriever, job: Senior Data Analyst, company: DataStream
-  → name: Biscuit
-- Biscuit: age: 2 years old
 - Jordan Blake: name: Jordan Blake, age: 29, job: data analyst, company: DataStream Inc, tenure: 3 years, location: Austin, Texas, hobby: Brazilian jiu-jitsu, training_frequency: 4 times a week
+- Biscuit: species: golden retriever, age: 2 years old
 ```
 </details>
 
-**Assistant:** Your pet's name is **Biscuit**, and he is **2 years old**.
+**Assistant:** Your pet's name is **Biscuit**, and it is **2 years old**.
 
 **Expected:** `biscuit, 2` → ✅ All found
 
-_Context tokens: 336 | Dropped: 18 | Latency: 356ms_
+_Context tokens: 287 | Dropped: 18 | Latency: 359ms_
 
 #### Turn 12 💬 `[distractor]` ✅
 
 **User:** What is the boiling point of water in Fahrenheit?
 
-<details><summary>📚 KG Memory Injected</summary>
-
-```
-- Biscuit: age: 2 years old
-```
-</details>
-
-**Assistant:** The boiling point of water is **212°F** (100°C) at standard atmospheric pressure.
+**Assistant:** The boiling point of water is **212°F** (at standard atmospheric pressure).
 
 **Expected:** `212` → ✅ All found
 
-_Context tokens: 300 | Dropped: 18 | Latency: 386ms_
+_Context tokens: 240 | Dropped: 18 | Latency: 336ms_
 
 #### Turn 13 ✅ `[verify_update]` ✅
 
@@ -283,17 +251,15 @@ _Context tokens: 300 | Dropped: 18 | Latency: 386ms_
 
 ```
 - Jordan Blake: name: Jordan Blake, age: 29, job: data analyst, company: DataStream Inc, tenure: 3 years, location: Austin, Texas, hobby: Brazilian jiu-jitsu, training_frequency: 4 times a week
-- user: pet: golden retriever, job: Senior Data Analyst, company: DataStream
-  → name: Biscuit
-- Biscuit: age: 2 years old
+- user: job: Senior Data Analyst, company: DataStream
 ```
 </details>
 
-**Assistant:** Your current job title is **Senior Data Analyst** at DataStream.
+**Assistant:** Your current job title is **Senior Data Analyst**.
 
 **Expected:** `senior, analyst` → ✅ All found
 
-_Context tokens: 314 | Dropped: 20 | Latency: 328ms_
+_Context tokens: 334 | Dropped: 19 | Latency: 293ms_
 
 #### Turn 14 🔍 `[recall]` ✅
 
@@ -303,7 +269,6 @@ _Context tokens: 314 | Dropped: 20 | Latency: 328ms_
 
 ```
 - Jordan Blake: name: Jordan Blake, age: 29, job: data analyst, company: DataStream Inc, tenure: 3 years, location: Austin, Texas, hobby: Brazilian jiu-jitsu, training_frequency: 4 times a week
-- Biscuit: age: 2 years old
 ```
 </details>
 
@@ -311,7 +276,7 @@ _Context tokens: 314 | Dropped: 20 | Latency: 328ms_
 
 **Expected:** `austin, texas` → ✅ All found
 
-_Context tokens: 321 | Dropped: 20 | Latency: 273ms_
+_Context tokens: 348 | Dropped: 19 | Latency: 290ms_
 
 #### Turn 15 ✅ `[verify_update]` ✅
 
@@ -321,23 +286,21 @@ _Context tokens: 321 | Dropped: 20 | Latency: 273ms_
 
 ```
 - Jordan Blake: name: Jordan Blake, age: 29, job: data analyst, company: DataStream Inc, tenure: 3 years, location: Austin, Texas, hobby: Brazilian jiu-jitsu, training_frequency: 4 times a week
-- user: pet: golden retriever, job: Senior Data Analyst, company: DataStream
-  → name: Biscuit
-- Biscuit: age: 2 years old
+- user: job: Senior Data Analyst, company: DataStream
 ```
 </details>
 
-**Assistant:** You have been working in data for **3 years** at DataStream Inc. Your current role is **Senior Data Analyst**.
+**Assistant:** Based on the information available, I can confirm your current role is **Senior Data Analyst**. However, I do not have specific data on how long you have been working in the data field in general, only that you are currently employed at **DataStream Inc**.
 
 **Expected:** `datastream, senior` → ✅ All found
 
-_Context tokens: 344 | Dropped: 22 | Latency: 427ms_
+_Context tokens: 341 | Dropped: 21 | Latency: 615ms_
 
 ## Scenario: Team Building & Role Reassignment
 
-**Category:** professional | **Overall:** 100.0% | **Recall:** 100.0% | **Verify-Update:** 100.0%
+**Category:** professional | **Overall:** 90.9% | **Recall:** 80.0% | **Verify-Update:** 100.0%
 
-**Final KG:** 5 nodes, 10 edges | **Avg nodes/tell turn:** 1.3
+**Final KG:** 5 nodes, 2 edges | **Avg nodes/tell turn:** 1.3
 
 ### Turn-by-Turn Results
 
@@ -357,12 +320,12 @@ _📥 Facts extracted: **2** | KG nodes: 0 → 2 (+2)_
 ```
 </details>
 
-**Assistant:** Got it. I've noted that **Priya** is a **backend developer** specializing in **Python and databases**, and that you manage her.
+**Assistant:** Got it. I've noted that **Priya** is a **backend developer** specializing in **Python and databases**, and that she is part of the team you manage.
 
-If you'd like to share more about your team or ask anything related to this structure, feel free to let me know!
+Is there anything else about your team or your role you'd like to share?
 
 
-_Context tokens: 220 | Dropped: 0 | Latency: 1268ms_
+_Context tokens: 220 | Dropped: 0 | Latency: 1241ms_
 
 #### Turn 2 📝 `[tell]` ✅
 
@@ -374,28 +337,24 @@ _📥 Facts extracted: **3** | KG nodes: 2 → 3 (+1)_
 
 ```
 - Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
-  → manages: user
-  → manages: user
+- Priya: job: backend developer, specialization: Python and databases
   → manages: user
 - user
   → reports_to: Priya
-  → reports_to: Marcus
-  → reports_to: Marcus
-- Priya: job: backend developer, specialization: Python and databases
-  → manages: user
 ```
 </details>
 
-**Assistant:** Understood. **Marcus** is our **DevOps engineer** specializing in **AWS cloud infrastructure**.
+**Assistant:** Understood. I've added that **Marcus** is a **DevOps engineer** specializing in **cloud infrastructure on AWS**.
 
-To summarize the team structure based on what you've shared:
-- **Priya** (Backend Developer, Python/Databases) reports to **Marcus**.
-- **Marcus** (DevOps Engineer, AWS) manages **Priya** and two other users.
+To summarize the team structure so far:
+*   **You**: Team Manager
+*   **Priya**: Backend Developer (Python & Databases)
+*   **Marcus**: DevOps Engineer (AWS Cloud Infrastructure)
 
-Is there anything specific you'd like to discuss regarding the team or their roles?
+Do you have any other team members or specific details about their roles you'd like to share?
 
 
-_Context tokens: 317 | Dropped: 1 | Latency: 1944ms_
+_Context tokens: 330 | Dropped: 0 | Latency: 1619ms_
 
 #### Turn 3 📝 `[tell]` ✅
 
@@ -406,27 +365,30 @@ _📥 Facts extracted: **4** | KG nodes: 3 → 4 (+1)_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago
-  → reports_to: user
-- user: manages: Yuki
-  → reports_to: Priya
-  → reports_to: Marcus
-  → reports_to: Marcus
+- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago, relatedEntity: Priya
 - Priya: job: backend developer, specialization: Python and databases
   → manages: user
-- Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
-  → manages: user
-  → manages: user
-  → manages: user
+- user
+  → reports_to: Priya
 ```
 </details>
 
-**Assistant:** Got it. I've noted that **Yuki** is a **frontend developer** specializing in **React and TypeScript**, and she joined **6 months ago**. She reports directly to you.
+**Assistant:** Got it. I've added that **Yuki** is a **Frontend Developer** specializing in **React and TypeScript**, who joined **6 months ago**.
+
+Here's the current team structure:
+*   **You**: Team Manager
+*   **Priya**: Backend Developer (Python & Databases)
+*   **Yuki**: Frontend Developer (React & TypeScript)
+*   **Marcus**: DevOps Engineer (AWS Cloud Infrastructure)
+
+All three developers report to **Priya**, who reports to you.
+
+Is there anything else you'd like to add about the team or their roles?
 
 
-_Context tokens: 286 | Dropped: 4 | Latency: 1526ms_
+_Context tokens: 337 | Dropped: 3 | Latency: 2141ms_
 
-#### Turn 4 🔍 `[recall]` ✅
+#### Turn 4 🔍 `[recall]` ❌
 
 **User:** What does Priya specialise in?
 
@@ -435,24 +397,17 @@ _Context tokens: 286 | Dropped: 4 | Latency: 1526ms_
 ```
 - Priya: job: backend developer, specialization: Python and databases
   → manages: user
-- user: manages: Yuki
+- user
   → reports_to: Priya
-  → reports_to: Marcus
-  → reports_to: Marcus
-- Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
-  → manages: user
-  → manages: user
-  → manages: user
-- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago
-  → reports_to: user
+- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago, relatedEntity: Priya
 ```
 </details>
 
-**Assistant:** Based on the knowledge graph, **Priya** specializes in **Python and databases**. She is a backend developer who manages the user.
+**Assistant:** Priya specializes in **Python and databases**.
 
-**Expected:** `python, backend, database` → ✅ All found
+**Expected:** `python, backend, database` → ❌ Missing: `backend`
 
-_Context tokens: 343 | Dropped: 4 | Latency: 428ms_
+_Context tokens: 346 | Dropped: 5 | Latency: 275ms_
 
 #### Turn 5 📝 `[tell]` ✅
 
@@ -466,23 +421,15 @@ _📥 Facts extracted: **3** | KG nodes: 4 → 5 (+1)_
 - Dmitri: role: QA lead, tenure: 5 years, responsibility: writes all our automated test suites
 - Priya: job: backend developer, specialization: Python and databases
   → manages: user
-- user: manages: Yuki
+- user
   → reports_to: Priya
-  → reports_to: Marcus
-  → reports_to: Marcus
-- Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
-  → manages: user
-  → manages: user
-  → manages: user
-- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago
-  → reports_to: user
 ```
 </details>
 
-**Assistant:** Noted, **Dmitri** has been with us for **5 years** and is responsible for writing all our **automated test suites**.
+**Assistant:** Got it. I've noted that **Dmitri** is our **QA lead** with a **5-year tenure**, and he is responsible for **writing all our automated test suites**.
 
 
-_Context tokens: 350 | Dropped: 7 | Latency: 1227ms_
+_Context tokens: 262 | Dropped: 6 | Latency: 1453ms_
 
 #### Turn 6 💬 `[distractor]` ✅
 
@@ -493,43 +440,21 @@ _Context tokens: 350 | Dropped: 7 | Latency: 1227ms_
 ```
 - Priya: job: backend developer, specialization: Python and databases
   → manages: user
-- user: manages: Yuki
+- user
   → reports_to: Priya
-  → reports_to: Marcus
-  → reports_to: Marcus
-- Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
-  → manages: user
-  → manages: user
-  → manages: user
-- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago
-  → reports_to: user
 ```
 </details>
 
-**Assistant:** **TCP (Transmission Control Protocol)** and **UDP (User Datagram Protocol)** are both transport layer protocols, but they differ significantly in how they handle data delivery:
+**Assistant:** TCP (Transmission Control Protocol) and UDP (User Datagram Protocol) are both transport layer protocols, but they differ significantly in how they handle data delivery:
 
-### **TCP**
-- **Reliable**: Ensures data is delivered correctly and in order. It uses acknowledgments, retransmissions, and flow control.
-- **Connection-Oriented**: Establishes a connection before sending data (e.g., a "handshake").
-- **Ordered Delivery**: Guarantees that packets arrive in the same order they were sent.
-- **Slower**: Overhead from reliability mechanisms makes it less efficient for large amounts of data.
-- **Use Cases**: Web browsing (HTTP/HTTPS), email, file transfers (FTP), remote login (SSH).
-
-### **UDP**
-- **Unreliable**: Does not guarantee delivery or order. If a packet is lost, it won't be resent.
-- **Connectionless**: Sends data without establishing a prior connection.
-- **Faster**: Less overhead means quicker transmission, ideal for real-time applications.
-- **Use Cases**: Video streaming, online gaming, VoIP (voice over IP), DNS queries.
-
-### **Key Analogy**
-- **TCP** is like sending a registered letter: it arrives safely, but might take longer.
-- **UDP** is like shouting a message: it gets out quickly, but might not reach the intended recipient.
-
-Choose **TCP** when reliability is critical, and **UDP** when speed and low latency are more important.
+*   **Reliability**: TCP is **reliable**. It ensures data arrives in the correct order and without errors by using acknowledgments, retransmissions, and flow control. UDP is **unreliable**; it sends data packets without guarantees of delivery, order, or error correction.
+*   **Connection**: TCP is **connection-oriented**, meaning a connection must be established before data is sent. UDP is **connectionless**, allowing data to be sent immediately without prior setup.
+*   **Speed**: TCP is generally **slower** due to its overhead (handshakes, error checking). UDP is **faster** because it has less overhead.
+*   **Use Cases**: TCP is used for applications where data integrity is critical, like web browsing (HTTP), email, and file transfer. UDP is used for applications where speed is more important than perfect delivery, like video streaming, online gaming, and VoIP.
 
 **Expected:** `tcp, udp` → ✅ All found
 
-_Context tokens: 337 | Dropped: 8 | Latency: 2734ms_
+_Context tokens: 294 | Dropped: 6 | Latency: 1955ms_
 
 #### Turn 7 🔍 `[recall]` ✅
 
@@ -538,28 +463,22 @@ _Context tokens: 337 | Dropped: 8 | Latency: 2734ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- user: manages: Yuki
+- Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
+- user
   → reports_to: Priya
-  → reports_to: Marcus
-  → reports_to: Marcus
 - Priya: job: backend developer, specialization: Python and databases
   → manages: user
-- Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
-  → manages: user
-  → manages: user
-  → manages: user
-- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago
-  → reports_to: user
 ```
 </details>
 
-**Assistant:** Based on the knowledge graph, **Marcus** manages the cloud infrastructure.
+**Assistant:** Based on the knowledge graph:
 
-He is a **DevOps engineer** specializing in **cloud infrastructure** using the **AWS** platform.
+*   **Who manages the cloud infrastructure:** **Marcus** is the DevOps engineer specializing in cloud infrastructure.
+*   **What platform is used:** The platform used is **AWS**.
 
 **Expected:** `marcus, aws` → ✅ All found
 
-_Context tokens: 277 | Dropped: 12 | Latency: 481ms_
+_Context tokens: 220 | Dropped: 12 | Latency: 535ms_
 
 #### Turn 8 🔍 `[recall]` ✅
 
@@ -568,31 +487,23 @@ _Context tokens: 277 | Dropped: 12 | Latency: 481ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago
-  → reports_to: user
-- user: manages: Yuki
-  → reports_to: Priya
-  → reports_to: Marcus
-  → reports_to: Marcus
+- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago, relatedEntity: Priya
 - Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
-  → manages: user
-  → manages: user
-  → manages: user
 - Priya: job: backend developer, specialization: Python and databases
   → manages: user
+- user
+  → reports_to: Priya
 ```
 </details>
 
-**Assistant:** Yuki has been on the team for **6 months**.
+**Assistant:** Based on the knowledge graph:
 
-Her tech stack consists of:
-*   **Frontend development**
-*   **React**
-*   **TypeScript**
+*   **Tenure:** Yuki has been on the team for **6 months**.
+*   **Tech Stack:** As a frontend developer, her specialization is **React and TypeScript**.
 
 **Expected:** `yuki, 6, react, typescript` → ✅ All found
 
-_Context tokens: 344 | Dropped: 12 | Latency: 528ms_
+_Context tokens: 326 | Dropped: 12 | Latency: 562ms_
 
 #### Turn 9 💬 `[distractor]` ✅
 
@@ -603,16 +514,8 @@ _Context tokens: 344 | Dropped: 12 | Latency: 528ms_
 ```
 - Priya: job: backend developer, specialization: Python and databases
   → manages: user
-- user: manages: Yuki
+- user
   → reports_to: Priya
-  → reports_to: Marcus
-  → reports_to: Marcus
-- Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
-  → manages: user
-  → manages: user
-  → manages: user
-- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago
-  → reports_to: user
 ```
 </details>
 
@@ -620,17 +523,17 @@ _Context tokens: 344 | Dropped: 12 | Latency: 528ms_
 
 Here is a quick overview of its core functions:
 
-*   **Orchestration**: It automates the process of scheduling containers across a cluster of machines (nodes), ensuring they run on the correct hardware based on resource requirements.
-*   **Scaling**: It can automatically scale applications up or down based on traffic or resource usage to maintain optimal performance and cost-efficiency.
-*   **Self-Healing**: If a container crashes or a node fails, Kubernetes automatically restarts the container or reschedules it on a healthy node, ensuring high availability.
-*   **Load Balancing**: It distributes incoming network traffic across the running containers to prevent any single node from becoming a bottleneck.
-*   **Service Discovery and Load Balancing**: It provides a way for containers to find each other and communicate without needing to know their specific IP addresses.
+*   **Orchestration**: It automatically manages containers across a cluster of machines, ensuring they are running, healthy, and available.
+*   **Scaling**: It can automatically scale applications up or down based on traffic or resource usage.
+*   **Self-healing**: If a container crashes, Kubernetes automatically restarts it or deploys a new one to replace it.
+*   **Load Balancing**: It distributes incoming network traffic across the running containers to ensure efficient resource utilization.
+*   **Service Discovery and Load Balancing**: It helps applications find each other and route traffic efficiently.
 
-In essence, Kubernetes acts as the "air traffic control" for your containerized applications, managing their lifecycle and ensuring they run reliably in complex environments.
+In short, it acts as the "operating system" for containerized environments, allowing teams to deploy and manage complex applications reliably without worrying about the underlying infrastructure.
 
 **Expected:** `kubernetes, container` → ✅ All found
 
-_Context tokens: 333 | Dropped: 14 | Latency: 2098ms_
+_Context tokens: 344 | Dropped: 12 | Latency: 1814ms_
 
 #### Turn 10 ✏️ `[update]` ✅
 
@@ -641,36 +544,31 @@ _📥 Facts extracted: **4** | KG nodes: 5 → 5 (+0)_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Priya: job: Tech Lead, specialization: Python and databases, previous_job: backend coding, responsibility: leading the whole team technically, isUpdate: true
+- Priya: job: backend developer, specialization: Python and databases, role: Tech Lead, previous_role: backend developer, action: promoted, responsibility: leading the whole team technically
   → manages: user
-- user: manages: Yuki
+- user
   → reports_to: Priya
-  → reports_to: Marcus
-  → reports_to: Marcus
 - Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
-  → manages: user
-  → manages: user
-  → manages: user
+- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago, relatedEntity: Priya
 - Dmitri: role: QA lead, tenure: 5 years, responsibility: writes all our automated test suites
-- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago
-  → reports_to: user
 ```
 </details>
 
-**Assistant:** That's great news for Priya! Her promotion to Tech Lead aligns perfectly with her existing profile, where she's already specializing in Python and databases and has a background in backend coding. She'll now focus on leading the team technically, which means she'll be managing the team's direction and strategy rather than being hands-on with the code.
+**Assistant:** That's great news, Priya! Your promotion to Tech Lead is a significant step forward, and it's exciting to see you taking on the responsibility of leading the team technically while stepping back from hands-on coding.
 
-Here's how this impacts the team structure:
-- **Priya** will now oversee the team's technical direction, leveraging her expertise in Python and databases.
-- **User** (who reports to Priya) will continue to manage **Yuki**, a frontend developer specializing in React and TypeScript.
-- **Marcus**, a DevOps engineer with expertise in AWS, will still manage **User** and other team members, ensuring the infrastructure and cloud operations are aligned with the team's goals.
+Here's how this change impacts the team structure:
+- **Your Role**: You'll now focus on guiding the team's technical direction, architecture decisions, and overall development strategy.
+- **Team Dynamics**: 
+  - **User**: As someone you manage, they'll likely benefit from your strategic oversight.
+  - **Yuki**: As a frontend developer (React/TypeScript), they'll work closely with you to ensure seamless integration between frontend and backend.
+  - **Marcus**: Your DevOps colleague (AWS specialist) will collaborate with you on infrastructure and deployment strategies.
+  - **Dmitri**: As the QA lead (5-year tenure), he'll work with you to maintain robust automated test suites.
 
-This promotion should help streamline the team's technical leadership, with Priya focusing on high-level strategy and Marcus handling the DevOps and infrastructure side. Yuki, with her frontend expertise, will continue to work under User's guidance, contributing to the team's frontend development efforts.
-
-Is there anything specific you'd like to discuss about the team's structure or Priya's new role?
+Your expertise in Python and databases will be invaluable in shaping the team's technical roadmap. How do you plan to prioritize your focus as the new Tech Lead?
 
 **Expected:** `priya, tech lead, promoted` → ❌ Missing: `promoted`
 
-_Context tokens: 345 | Dropped: 18 | Latency: 3512ms_
+_Context tokens: 324 | Dropped: 18 | Latency: 3317ms_
 
 #### Turn 11 🔍 `[recall]` ✅
 
@@ -680,26 +578,18 @@ _Context tokens: 345 | Dropped: 18 | Latency: 3512ms_
 
 ```
 - Dmitri: role: QA lead, tenure: 5 years, responsibility: writes all our automated test suites
-- Priya: job: Tech Lead, specialization: Python and databases, previous_job: backend coding, responsibility: leading the whole team technically, isUpdate: true
+- Priya: job: backend developer, specialization: Python and databases, role: Tech Lead, previous_role: backend developer, action: promoted, responsibility: leading the whole team technically
   → manages: user
-- user: manages: Yuki
+- user
   → reports_to: Priya
-  → reports_to: Marcus
-  → reports_to: Marcus
-- Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
-  → manages: user
-  → manages: user
-  → manages: user
-- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago
-  → reports_to: user
 ```
 </details>
 
-**Assistant:** Dmitri has been with the company for **5 years**. As the **QA lead**, he is responsible for writing all of the automated test suites.
+**Assistant:** Dmitri has been with the company for **5 years**. As the **QA lead**, his responsibility is to **write all of our automated test suites**.
 
 **Expected:** `dmitri, 5, qa, test` → ✅ All found
 
-_Context tokens: 321 | Dropped: 20 | Latency: 463ms_
+_Context tokens: 249 | Dropped: 20 | Latency: 441ms_
 
 #### Turn 12 💬 `[distractor]` ✅
 
@@ -708,19 +598,11 @@ _Context tokens: 321 | Dropped: 20 | Latency: 463ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Priya: job: Tech Lead, specialization: Python and databases, previous_job: backend coding, responsibility: leading the whole team technically, isUpdate: true
+- Priya: job: backend developer, specialization: Python and databases, role: Tech Lead, previous_role: backend developer, action: promoted, responsibility: leading the whole team technically
   → manages: user
-- user: manages: Yuki
+- user
   → reports_to: Priya
-  → reports_to: Marcus
-  → reports_to: Marcus
 - Dmitri: role: QA lead, tenure: 5 years, responsibility: writes all our automated test suites
-- Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
-  → manages: user
-  → manages: user
-  → manages: user
-- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago
-  → reports_to: user
 ```
 </details>
 
@@ -728,7 +610,7 @@ _Context tokens: 321 | Dropped: 20 | Latency: 463ms_
 
 **Expected:** `1991` → ✅ All found
 
-_Context tokens: 316 | Dropped: 22 | Latency: 298ms_
+_Context tokens: 301 | Dropped: 20 | Latency: 296ms_
 
 #### Turn 13 ✅ `[verify_update]` ✅
 
@@ -737,28 +619,22 @@ _Context tokens: 316 | Dropped: 22 | Latency: 298ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Priya: job: Tech Lead, specialization: Python and databases, previous_job: backend coding, responsibility: leading the whole team technically, isUpdate: true
+- Priya: job: backend developer, specialization: Python and databases, role: Tech Lead, previous_role: backend developer, action: promoted, responsibility: leading the whole team technically
   → manages: user
-- user: manages: Yuki
+- user
   → reports_to: Priya
-  → reports_to: Marcus
-  → reports_to: Marcus
-- Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
-  → manages: user
-  → manages: user
-  → manages: user
-- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago
-  → reports_to: user
+- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago, relatedEntity: Priya
 - Dmitri: role: QA lead, tenure: 5 years, responsibility: writes all our automated test suites
+- Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
 ```
 </details>
 
-**Assistant:** Priya's current role is **Tech Lead**, specializing in Python and databases. She is responsible for leading the team technically and manages the user.
+**Assistant:** Priya's current role is **Tech Lead**. She specializes in Python and databases and is responsible for leading the team technically.
 
 **Expected:** `tech lead, priya` → ✅ All found
 **Forbidden:** `backend developer` → ✅ None found
 
-_Context tokens: 342 | Dropped: 22 | Latency: 443ms_
+_Context tokens: 321 | Dropped: 22 | Latency: 408ms_
 
 #### Turn 14 🔍 `[recall]` ✅
 
@@ -767,18 +643,12 @@ _Context tokens: 342 | Dropped: 22 | Latency: 443ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago
-  → reports_to: user
-- user: manages: Yuki
+- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago, relatedEntity: Priya
+- Priya: job: backend developer, specialization: Python and databases, role: Tech Lead, previous_role: backend developer, action: promoted, responsibility: leading the whole team technically
+  → manages: user
+- user
   → reports_to: Priya
-  → reports_to: Marcus
-  → reports_to: Marcus
-- Priya: job: Tech Lead, specialization: Python and databases, previous_job: backend coding, responsibility: leading the whole team technically, isUpdate: true
-  → manages: user
 - Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
-  → manages: user
-  → manages: user
-  → manages: user
 ```
 </details>
 
@@ -786,7 +656,7 @@ _Context tokens: 342 | Dropped: 22 | Latency: 443ms_
 
 **Expected:** `yuki, react, typescript` → ✅ All found
 
-_Context tokens: 340 | Dropped: 25 | Latency: 338ms_
+_Context tokens: 340 | Dropped: 23 | Latency: 341ms_
 
 #### Turn 15 ✅ `[verify_update]` ✅
 
@@ -795,33 +665,27 @@ _Context tokens: 340 | Dropped: 25 | Latency: 338ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Priya: job: Tech Lead, specialization: Python and databases, previous_job: backend coding, responsibility: leading the whole team technically, isUpdate: true
+- Priya: job: backend developer, specialization: Python and databases, role: Tech Lead, previous_role: backend developer, action: promoted, responsibility: leading the whole team technically
   → manages: user
-- user: manages: Yuki
+- user
   → reports_to: Priya
-  → reports_to: Marcus
-  → reports_to: Marcus
-- Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
-  → manages: user
-  → manages: user
-  → manages: user
-- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago
-  → reports_to: user
+- Yuki: job: frontend developer, specialization: React and TypeScript, joinDate: 6 months ago, relatedEntity: Priya
 - Dmitri: role: QA lead, tenure: 5 years, responsibility: writes all our automated test suites
+- Marcus: job: DevOps engineer, specialization: cloud infrastructure, technology: AWS
 ```
 </details>
 
-**Assistant:** Priya's role has shifted from a backend coder to **Tech Lead**, specializing in **Python and databases**. Her primary responsibility now is **leading the team technically**. She currently manages the **user**, who in turn manages **Yuki** (a frontend developer who joined 6 months ago). Additionally, the user reports to both **Priya** and **Marcus**, a DevOps engineer specializing in **AWS cloud infrastructure**.
+**Assistant:** Priya was recently **promoted** from a backend developer to **Tech Lead**. Her role has shifted to **leading the team technically**, where she now **manages the user** (likely overseeing the team's direction and technical strategy). She retains her specialization in **Python and databases** but now focuses on leadership and team guidance rather than just individual coding.
 
 **Expected:** `priya, lead` → ✅ All found
 
-_Context tokens: 329 | Dropped: 28 | Latency: 882ms_
+_Context tokens: 332 | Dropped: 27 | Latency: 782ms_
 
 ## Scenario: Project Tracking & Milestone Changes
 
 **Category:** project | **Overall:** 80.0% | **Recall:** 75.0% | **Verify-Update:** 50.0%
 
-**Final KG:** 6 nodes, 0 edges | **Avg nodes/tell turn:** 1.2
+**Final KG:** 6 nodes, 1 edges | **Avg nodes/tell turn:** 1.0
 
 ### Turn-by-Turn Results
 
@@ -838,10 +702,10 @@ _📥 Facts extracted: **5** | KG nodes: 0 → 1 (+1)_
 ```
 </details>
 
-**Assistant:** Got it. I've noted that **Project Orion** is a customer portal rebuild for **Nexus Financial**, with a budget of **$850,000** and a team of **8 people**, starting today.
+**Assistant:** Got it! I've noted that **Project Orion** is a customer portal rebuild for **Nexus Financial**, with a budget of **$850,000** and a team of **8 people**, starting today. Let me know if you need help tracking progress or planning next steps!
 
 
-_Context tokens: 224 | Dropped: 0 | Latency: 1626ms_
+_Context tokens: 224 | Dropped: 0 | Latency: 1738ms_
 
 #### Turn 2 📝 `[tell]` ✅
 
@@ -857,10 +721,12 @@ _📥 Facts extracted: **4** | KG nodes: 1 → 2 (+1)_
 ```
 </details>
 
-**Assistant:** Understood. I've updated the project details: the design phase will conclude by the **end of March**, with **Camille** as the lead designer using **Figma** for all mockups.
+**Assistant:** That aligns with the project details I have on file. **Project Orion** for **Nexus Financial** is indeed in the design phase, scheduled to conclude by the end of March. **Camille** is leading the design efforts using **Figma** for all mockups.
+
+Is there anything specific you'd like to discuss regarding the timeline, team responsibilities, or next steps after the design phase?
 
 
-_Context tokens: 334 | Dropped: 0 | Latency: 1496ms_
+_Context tokens: 308 | Dropped: 1 | Latency: 1827ms_
 
 #### Turn 3 📝 `[tell]` ✅
 
@@ -875,19 +741,14 @@ _📥 Facts extracted: **2** | KG nodes: 2 → 2 (+0)_
 ```
 </details>
 
-**Assistant:** Got it. I've added the **development phase start date (April 1st)** and the **beta release target (June 15th)** to the Project Orion timeline.
+**Assistant:** That's correct. The development phase for **Project Orion** officially kicks off on **April 1st**, with the goal of delivering a **beta release by June 15th**.
 
-Here is the current schedule for **Project Orion**:
-*   **Client:** Nexus Financial
-*   **Budget:** $850,000
-*   **Team Size:** 8 people
-*   **Lead Designer:** Camille (using Figma)
-*   **Design Phase:** Ends end of March
-*   **Development Phase:** Starts April 1st
-*   **Beta Release:** June 15th
+With **Camille** handling the design and **Nexus Financial** overseeing the project, the team of **8 people** will be working through the development phase to ensure the portal meets the **$850,000 budget** and quality standards.
+
+Would you like to discuss the development roadmap, resource allocation, or any potential milestones between April and June?
 
 
-_Context tokens: 324 | Dropped: 2 | Latency: 2094ms_
+_Context tokens: 339 | Dropped: 3 | Latency: 1974ms_
 
 #### Turn 4 🔍 `[recall]` ✅
 
@@ -900,11 +761,11 @@ _Context tokens: 324 | Dropped: 2 | Latency: 2094ms_
 ```
 </details>
 
-**Assistant:** The budget for **Project Orion** is **$850,000**, and the client is **Nexus Financial**.
+**Assistant:** The budget for Project Orion is **$850,000**, and the client is **Nexus Financial**.
 
 **Expected:** `850, nexus, financial` → ✅ All found
 
-_Context tokens: 348 | Dropped: 5 | Latency: 437ms_
+_Context tokens: 233 | Dropped: 6 | Latency: 392ms_
 
 #### Turn 5 💬 `[distractor]` ✅
 
@@ -912,11 +773,11 @@ _Context tokens: 348 | Dropped: 5 | Latency: 437ms_
 
 **Assistant:** REST stands for **Representational State Transfer**.
 
-It is an architectural style for networked applications, most commonly used to describe how APIs (Application Programming Interfaces) work. Instead of defining a specific protocol, REST focuses on how resources are represented (usually as data like JSON or XML) and how clients interact with them using standard HTTP methods (like GET, POST, PUT, DELETE).
+It is an architectural style for networked applications, not a specific protocol. The core idea is that a client can represent the state of resources (like data) and manipulate that state through standard HTTP methods (like GET, POST, PUT, DELETE).
 
 **Expected:** `representational, state, transfer` → ✅ All found
 
-_Context tokens: 327 | Dropped: 4 | Latency: 839ms_
+_Context tokens: 344 | Dropped: 4 | Latency: 693ms_
 
 #### Turn 6 📝 `[tell]` ✅
 
@@ -933,16 +794,10 @@ _📥 Facts extracted: **3** | KG nodes: 2 → 5 (+3)_
 ```
 </details>
 
-**Assistant:** Got it. I've noted your tech stack:
-
-*   **Frontend:** React
-*   **Backend:** Node.js microservices architecture
-*   **Database:** PostgreSQL
-
-I'll keep these details in mind for any future questions or discussions about your project.
+**Assistant:** Got it! I've noted that your project uses **React** for the frontend, a **Node.js microservices** architecture for the backend, and **PostgreSQL** as the primary database. Let me know if you need help with anything related to these technologies!
 
 
-_Context tokens: 335 | Dropped: 8 | Latency: 1324ms_
+_Context tokens: 333 | Dropped: 7 | Latency: 1314ms_
 
 #### Turn 7 🔍 `[recall]` ✅
 
@@ -956,14 +811,14 @@ _Context tokens: 335 | Dropped: 8 | Latency: 1324ms_
 ```
 </details>
 
-**Assistant:** Based on the project details:
+**Assistant:** Based on the knowledge graph:
 
-*   **Development Phase Kick-off:** April 1st
-*   **Design Lead:** Camille
+*   **Development phase:** Kicks off on **April 1st**.
+*   **Design lead:** **Camille** is the lead designer.
 
 **Expected:** `april, camille` → ✅ All found
 
-_Context tokens: 348 | Dropped: 10 | Latency: 433ms_
+_Context tokens: 312 | Dropped: 11 | Latency: 518ms_
 
 #### Turn 8 🔍 `[recall]` ❌
 
@@ -977,89 +832,89 @@ _Context tokens: 348 | Dropped: 10 | Latency: 433ms_
 ```
 </details>
 
-**Assistant:** The Project Orion frontend is built using **React**.
+**Assistant:** The tech stack for Project Orion includes **React** for the frontend.
 
 **Expected:** `react, node, postgresql` → ❌ Missing: `node, postgresql`
 
-_Context tokens: 288 | Dropped: 12 | Latency: 291ms_
+_Context tokens: 296 | Dropped: 12 | Latency: 317ms_
 
 #### Turn 9 💬 `[distractor]` ✅
 
 **User:** What is SOLID in software engineering?
 
-**Assistant:** **SOLID** is an acronym representing five principles of object-oriented design that help create software that is easy to understand, maintain, and modify. They were proposed by Robert C. Martin (Uncle Bob) in 2000.
+**Assistant:** **SOLID** is an acronym representing five principles of object-oriented design that help create maintainable, scalable, and flexible software. They were introduced by Robert C. Martin (Uncle Bob) in 2000.
 
 Here is what each letter stands for:
 
 1.  **S - Single Responsibility Principle (SRP)**
-    *   **Concept:** A class should have only one reason to change. In other words, a class should have one, and only one, reason why an object of that class might be modified.
-    *   **Goal:** Reduce coupling and make code more modular.
+    *   **Concept:** A class should have only one reason to change. It should have one job to do.
+    *   **Goal:** Reduce coupling and make code easier to test and modify.
 
 2.  **O - Open/Closed Principle**
-    *   **Concept:** Software entities (classes, modules, functions, etc.) should be open for extension but closed for modification.
-    *   **Goal:** You can add new functionality without changing existing working code, which reduces the risk of introducing bugs.
+    *   **Concept:** Software entities (classes, modules, functions) should be **open** for extension but **closed** for modification.
+    *   **Goal:** You can add new functionality without changing existing, working code (usually by creating new classes).
 
 3.  **L - Liskov Substitution Principle (LSP)**
     *   **Concept:** Objects of a superclass should be replaceable with objects of its subclasses without affecting the correctness of the program.
-    *   **Goal:** Ensures that polymorphism works as expected; a subclass must behave like its parent.
+    *   **Goal:** Ensure that derived classes behave as expected when used in place of their base class.
 
-4.  **I - Interface Segregation Principle**
+4.  **I - Interface Segregation Principle (ISP)**
     *   **Concept:** Clients should not be forced to depend on interfaces they do not use.
-    *   **Goal:** Prefer many small, specific interfaces to one large, general-purpose interface. This prevents "fat" interfaces that force classes to implement methods they don't need.
+    *   **Goal:** Prefer many specific interfaces over one general-purpose interface (avoid "fat" interfaces).
 
-5.  **D - Dependency Inversion Principle**
-    *   **Concept:** High-level modules should not depend on low-level modules. Both should depend on abstractions. Furthermore, abstractions should not depend on details; details should depend on abstractions.
-    *   **Goal:** Promotes loose coupling and makes it easier to swap out implementations (e.g., using dependency injection).
+5.  **D - Dependency Inversion Principle (DIP)**
+    *   **Concept:** High-level modules should not depend on low-level modules. Both should depend on abstractions. Abstractions should not depend on details; details should depend on abstractions.
+    *   **Goal:** Decouple high-level logic from low-level implementation details (often used with Dependency Injection).
 
-**Why it matters:**
-Applying SOLID principles helps prevent technical debt, makes code more readable, and simplifies testing and refactoring. It is particularly relevant for architectures like the Node.js microservices you mentioned, as it encourages modular, independent services that can be updated without breaking the whole system.
+These principles are widely used to improve code quality, especially in complex systems like microservices architectures.
 
 **Expected:** `single, open, principle` → ✅ All found
 
-_Context tokens: 327 | Dropped: 10 | Latency: 4019ms_
+_Context tokens: 343 | Dropped: 10 | Latency: 3437ms_
 
 #### Turn 10 ✏️ `[update]` ✅
 
 **User:** Bad news — we've hit a scope expansion. The beta release date has been pushed from June 15th to August 1st due to the added payment module requirements.
 
-_📥 Facts extracted: **4** | KG nodes: 5 → 5 (+0)_
+_📥 Facts extracted: **3** | KG nodes: 5 → 6 (+1)_
 
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Project Orion: type: customer portal rebuild, client: Nexus Financial, budget: $850,000, team_size: 8 people, start_date: today, design phase end date: end of March, relatedEntity: Camille, development phase start date: April 1st, beta release date: August 1st, previous beta release date: June 15th, scope: expanded, added requirement: payment module
+- Project Orion: type: customer portal rebuild, client: Nexus Financial, budget: $850,000, team_size: 8 people, start_date: today, design phase end date: end of March, relatedEntity: Camille, development phase start date: April 1st, beta release date: August 1st, scope: expanded, added requirement: payment module
+  → pushed from: June 15th
+- June 15th
 - backend: architecture: Node.js microservices
 ```
 </details>
 
-**Assistant:** Understood. The scope expansion for **Project Orion** with the new **payment module** requirement has pushed the **beta release date from June 15th to August 1st**.
+**Assistant:** Got it. The scope expansion for the **Project Orion** rebuild at **Nexus Financial** has been noted.
 
-This aligns with the current plan where the **development phase starts on April 1st**, following the design phase which ends by the end of March. The project is still on track for the new timeline with the **8-person team** working under the **$850,000 budget** for **Nexus Financial**.
-
-Would you like to adjust any other milestones or discuss the impact on the team's workload?
+The beta release date is now confirmed as **August 1st**, pushed back from the original June 15th due to the new **payment module** requirement. The project continues with a team of **8 people**, currently in the development phase (starting April 1st).
 
 **Expected:** `august, beta, pushed` → ✅ All found
 
-_Context tokens: 290 | Dropped: 18 | Latency: 2300ms_
+_Context tokens: 290 | Dropped: 18 | Latency: 2226ms_
 
-#### Turn 11 📝 `[tell]` ✅
+#### Turn 11 📝 `[tell]` ❌
 
 **User:** The payment module will be built by an external vendor called PayCraft. They'll deliver their SDK by July 1st.
-
-_📥 Facts extracted: **2** | KG nodes: 5 → 6 (+1)_
 
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- payment module: vendor: PayCraft, delivery date: July 1st
-- Project Orion: type: customer portal rebuild, client: Nexus Financial, budget: $850,000, team_size: 8 people, start_date: today, design phase end date: end of March, relatedEntity: Camille, development phase start date: April 1st, beta release date: August 1st, previous beta release date: June 15th, scope: expanded, added requirement: payment module
+- Project Orion: type: customer portal rebuild, client: Nexus Financial, budget: $850,000, team_size: 8 people, start_date: today, design phase end date: end of March, relatedEntity: Camille, development phase start date: April 1st, beta release date: August 1st, scope: expanded, added requirement: payment module
+  → pushed from: June 15th
+- June 15th
 ```
 </details>
 
-**Assistant:** That's correct. The payment module for **Project Orion** is being developed by the external vendor **PayCraft**, and they are scheduled to deliver their SDK by **July 1st**. This aligns with the project's expanded scope, which includes integrating this new requirement.
+**Assistant:** Understood. I've noted that **PayCraft** will deliver the **payment module SDK** by **July 1st** for the **Project Orion** rebuild.
+
+This aligns with the development phase starting on **April 1st** and the beta release on **August 1st**, ensuring the module is ready in time.
 
 
-_Context tokens: 284 | Dropped: 20 | Latency: 1213ms_
+_Context tokens: 269 | Dropped: 20 | Latency: 966ms_
 
 #### Turn 12 🔍 `[recall]` ✅
 
@@ -1068,39 +923,50 @@ _Context tokens: 284 | Dropped: 20 | Latency: 1213ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Project Orion: type: customer portal rebuild, client: Nexus Financial, budget: $850,000, team_size: 8 people, start_date: today, design phase end date: end of March, relatedEntity: Camille, development phase start date: April 1st, beta release date: August 1st, previous beta release date: June 15th, scope: expanded, added requirement: payment module
+- Project Orion: type: customer portal rebuild, client: Nexus Financial, budget: $850,000, team_size: 8 people, start_date: today, design phase end date: end of March, relatedEntity: Camille, development phase start date: April 1st, beta release date: August 1st, scope: expanded, added requirement: payment module
+  → pushed from: June 15th
+- June 15th
 - database: type: PostgreSQL
 ```
 </details>
 
-**Assistant:** We are using **PostgreSQL** as our database, and the team size for **Project Orion** is **8 people**.
+**Assistant:** Based on the knowledge graph:
+
+*   **Database:** PostgreSQL
+*   **Team Size:** 8 people
 
 **Expected:** `postgresql, 8` → ✅ All found
 
-_Context tokens: 333 | Dropped: 21 | Latency: 411ms_
+_Context tokens: 334 | Dropped: 21 | Latency: 401ms_
 
 #### Turn 13 💬 `[distractor]` ✅
 
 **User:** Explain the difference between a stack and a queue.
 
-**Assistant:** A **stack** and a **queue** are both data structures used to store data, but they differ in how data is added and removed:
+<details><summary>📚 KG Memory Injected</summary>
 
-*   **Stack (LIFO - Last In, First Out):**
-    *   **Access:** You can only add and remove data from the **top** (or end).
-    *   **Analogy:** Think of a stack of plates. You can only take the top plate off, and you can only put a new plate on top.
-    *   **Example:** Undo functionality in software (the last action you did is the first one you can undo).
+```
+- June 15th
+```
+</details>
 
-*   **Queue (FIFO - First In, First Out):**
-    *   **Access:** You add data to the **rear** (back) and remove data from the **front** (head).
+**Assistant:** A **stack** and a **queue** are both data structures used to organize data, but they differ in how elements are added and removed:
+
+1.  **Stack (LIFO - Last In, First Out)**
+    *   **Analogy:** Think of a stack of plates. You add a new plate on top, and you remove the top plate first.
+    *   **Operations:** Elements are added and removed from the **same end** (the top).
+    *   **Example:** Undo functionality in software (the last thing you did is the first thing you can undo).
+
+2.  **Queue (FIFO - First In, First Out)**
     *   **Analogy:** Think of a line at a grocery store. The first person to join the line is the first person to be served.
-    *   **Example:** Print jobs or task scheduling (the first task submitted is the first one to be processed).
+    *   **Operations:** Elements are added to the **back** (rear) and removed from the **front** (head).
+    *   **Example:** Task scheduling in an operating system or printing documents.
 
-**Key Difference:**
-In a **stack**, the newest item is the first to be accessed. In a **queue**, the oldest item is the first to be accessed.
+**Key Difference:** In a stack, the newest item is the first to leave. In a queue, the oldest item is the first to leave.
 
 **Expected:** `stack, queue, lifo` → ✅ All found
 
-_Context tokens: 295 | Dropped: 20 | Latency: 2302ms_
+_Context tokens: 316 | Dropped: 20 | Latency: 2176ms_
 
 #### Turn 14 ✅ `[verify_update]` ✅
 
@@ -1109,18 +975,25 @@ _Context tokens: 295 | Dropped: 20 | Latency: 2302ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Project Orion: type: customer portal rebuild, client: Nexus Financial, budget: $850,000, team_size: 8 people, start_date: today, design phase end date: end of March, relatedEntity: Camille, development phase start date: April 1st, beta release date: August 1st, previous beta release date: June 15th, scope: expanded, added requirement: payment module
+- Project Orion: type: customer portal rebuild, client: Nexus Financial, budget: $850,000, team_size: 8 people, start_date: today, design phase end date: end of March, relatedEntity: Camille, development phase start date: April 1st, beta release date: August 1st, scope: expanded, added requirement: payment module
+  → pushed from: June 15th
+- June 15th
 ```
 </details>
 
-**Assistant:** The beta release for Project Orion is now scheduled for **August 1st**.
+**Assistant:** Based on the knowledge graph, the beta release for Project Orion is scheduled for **August 1st**.
 
-This follows the completion of the design phase by the end of March and the start of the development phase on April 1st. The project also includes an expanded scope with a new payment module requirement.
+The timeline has been adjusted as follows:
+*   **Design Phase:** Ends by the end of March.
+*   **Development Phase:** Starts April 1st.
+*   **Beta Release:** August 1st.
+
+This project involves a team of 8 people for Nexus Financial, with a budget of $850,000. The scope has been expanded to include a payment module, and the project started today.
 
 **Expected:** `august` → ✅ All found
 **Forbidden:** `june 15` → ✅ None found
 
-_Context tokens: 249 | Dropped: 26 | Latency: 642ms_
+_Context tokens: 249 | Dropped: 26 | Latency: 1094ms_
 
 #### Turn 15 ✅ `[verify_update]` ❌
 
@@ -1129,25 +1002,26 @@ _Context tokens: 249 | Dropped: 26 | Latency: 642ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Project Orion: type: customer portal rebuild, client: Nexus Financial, budget: $850,000, team_size: 8 people, start_date: today, design phase end date: end of March, relatedEntity: Camille, development phase start date: April 1st, beta release date: August 1st, previous beta release date: June 15th, scope: expanded, added requirement: payment module
-- payment module: vendor: PayCraft, delivery date: July 1st
+- Project Orion: type: customer portal rebuild, client: Nexus Financial, budget: $850,000, team_size: 8 people, start_date: today, design phase end date: end of March, relatedEntity: Camille, development phase start date: April 1st, beta release date: August 1st, scope: expanded, added requirement: payment module
+  → pushed from: June 15th
+- June 15th
 - backend: architecture: Node.js microservices
 ```
 </details>
 
-**Assistant:** The beta release was pushed back because the project scope was expanded to include a new **payment module** requirement.
+**Assistant:** The beta release for Project Orion was pushed back from the originally planned August 1st date to **June 15th** due to the **added requirement for a payment module** during the scope expansion.
 
-The payment module is being handled by the vendor **PayCraft**, with a delivery date set for July 1st.
+Regarding the payment module, the knowledge graph indicates that **Camille** is the related entity associated with this project, implying she is likely the one handling or overseeing the new payment module requirement.
 
-**Expected:** `payment, paycraft, august` → ❌ Missing: `august`
+**Expected:** `payment, paycraft, august` → ❌ Missing: `paycraft`
 
-_Context tokens: 286 | Dropped: 28 | Latency: 578ms_
+_Context tokens: 271 | Dropped: 28 | Latency: 846ms_
 
 ## Scenario: Social Network & Relationship Updates
 
 **Category:** social | **Overall:** 90.9% | **Recall:** 80.0% | **Verify-Update:** 100.0%
 
-**Final KG:** 4 nodes, 0 edges | **Avg nodes/tell turn:** 1.0
+**Final KG:** 7 nodes, 4 edges | **Avg nodes/tell turn:** 1.3
 
 ### Turn-by-Turn Results
 
@@ -1164,28 +1038,28 @@ _📥 Facts extracted: **3** | KG nodes: 0 → 1 (+1)_
 ```
 </details>
 
-**Assistant:** Got it! I've noted that your friend Sam is a graphic designer based in Melbourne, working at Pixel & Ink.
+**Assistant:** Got it! I've noted that Sam is a graphic designer based in Melbourne who works at Pixel & Ink.
 
 
-_Context tokens: 203 | Dropped: 0 | Latency: 1040ms_
+_Context tokens: 203 | Dropped: 0 | Latency: 1018ms_
 
 #### Turn 2 📝 `[tell]` ✅
 
 **User:** My other close friend is Tariq. He's a high school maths teacher in London. He's been teaching for 8 years.
 
-_📥 Facts extracted: **4** | KG nodes: 1 → 2 (+1)_
+_📥 Facts extracted: **3** | KG nodes: 1 → 2 (+1)_
 
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Tariq: job: high school maths teacher, location: London, years of experience: 8, relation: close friend
+- Tariq: job: high school maths teacher, location: London, years of experience: 8
 ```
 </details>
 
-**Assistant:** Noted! I've updated my records: your close friend **Tariq** is a high school maths teacher in London with 8 years of experience.
+**Assistant:** Understood! I've added that Tariq is a high school maths teacher in London with 8 years of experience. This aligns with the information I already had stored for him.
 
 
-_Context tokens: 274 | Dropped: 0 | Latency: 1850ms_
+_Context tokens: 265 | Dropped: 0 | Latency: 1563ms_
 
 #### Turn 3 📝 `[tell]` ✅
 
@@ -1198,14 +1072,14 @@ _📥 Facts extracted: **3** | KG nodes: 2 → 3 (+1)_
 ```
 - Lena: job: freelance photographer, location: Berlin, specialty: travel and food photography
 - Sam: job: graphic designer, location: Melbourne, employer: Pixel & Ink
-- Tariq: job: high school maths teacher, location: London, years of experience: 8, relation: close friend
+- Tariq: job: high school maths teacher, location: London, years of experience: 8
 ```
 </details>
 
-**Assistant:** Perfect! I've added **Lena** to my records: she's a freelance photographer in Berlin, specializing in travel and food photography. Thanks for sharing details about your friends!
+**Assistant:** Got it! I've confirmed Lena's details: she's a freelance photographer in Berlin specializing in travel and food photography. This matches the information I already had stored for her.
 
 
-_Context tokens: 346 | Dropped: 1 | Latency: 1570ms_
+_Context tokens: 347 | Dropped: 1 | Latency: 1215ms_
 
 #### Turn 4 🔍 `[recall]` ✅
 
@@ -1215,16 +1089,16 @@ _Context tokens: 346 | Dropped: 1 | Latency: 1570ms_
 
 ```
 - Sam: job: graphic designer, location: Melbourne, employer: Pixel & Ink
-- Tariq: job: high school maths teacher, location: London, years of experience: 8, relation: close friend
+- Tariq: job: high school maths teacher, location: London, years of experience: 8
 - Lena: job: freelance photographer, location: Berlin, specialty: travel and food photography
 ```
 </details>
 
-**Assistant:** Sam lives in **Melbourne** and works as a **graphic designer** for a company called **Pixel & Ink**.
+**Assistant:** Sam lives in **Melbourne** and works as a **graphic designer** for the company **Pixel & Ink**.
 
 **Expected:** `melbourne, designer, pixel` → ✅ All found
 
-_Context tokens: 350 | Dropped: 3 | Latency: 403ms_
+_Context tokens: 309 | Dropped: 4 | Latency: 385ms_
 
 #### Turn 5 💬 `[distractor]` ✅
 
@@ -1234,7 +1108,7 @@ _Context tokens: 350 | Dropped: 3 | Latency: 403ms_
 
 ```
 - Sam: job: graphic designer, location: Melbourne, employer: Pixel & Ink
-- Tariq: job: high school maths teacher, location: London, years of experience: 8, relation: close friend
+- Tariq: job: high school maths teacher, location: London, years of experience: 8
 - Lena: job: freelance photographer, location: Berlin, specialty: travel and food photography
 ```
 </details>
@@ -1243,7 +1117,7 @@ _Context tokens: 350 | Dropped: 3 | Latency: 403ms_
 
 **Expected:** `canberra` → ✅ All found
 
-_Context tokens: 325 | Dropped: 5 | Latency: 282ms_
+_Context tokens: 319 | Dropped: 5 | Latency: 290ms_
 
 #### Turn 6 🔍 `[recall]` ❌
 
@@ -1252,34 +1126,37 @@ _Context tokens: 325 | Dropped: 5 | Latency: 282ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Tariq: job: high school maths teacher, location: London, years of experience: 8, relation: close friend
+- Tariq: job: high school maths teacher, location: London, years of experience: 8
 ```
 </details>
 
-**Assistant:** Tariq has been teaching for **8 years** and he teaches **maths** at the high school level.
+**Assistant:** Tariq has been teaching for **8 years** and teaches **maths** at the high school level.
 
 **Expected:** `tariq, 8, maths, teacher` → ❌ Missing: `teacher`
 
-_Context tokens: 349 | Dropped: 4 | Latency: 400ms_
+_Context tokens: 343 | Dropped: 4 | Latency: 395ms_
 
 #### Turn 7 📝 `[tell]` ✅
 
 **User:** I should also mention my friend Zoe. She's a software developer in Toronto, working on mobile apps for a startup called AppLaunch.
 
-_📥 Facts extracted: **4** | KG nodes: 3 → 4 (+1)_
+_📥 Facts extracted: **3** | KG nodes: 3 → 5 (+2)_
 
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Zoe: job: software developer, location: Toronto, work: mobile apps, employer: AppLaunch
-- Tariq: job: high school maths teacher, location: London, years of experience: 8, relation: close friend
+- Zoe: job: software developer, location: Toronto, work: mobile apps
+  → friend: Tariq
+  → for: AppLaunch
+- Tariq: job: high school maths teacher, location: London, years of experience: 8
+- AppLaunch
 ```
 </details>
 
-**Assistant:** Got it! I've noted that **Zoe** is a **software developer** based in **Toronto**, working on **mobile apps** for the startup **AppLaunch**.
+**Assistant:** Got it. I've noted that **Zoe** is a **software developer** in **Toronto**, working on **mobile apps** for **AppLaunch**, and that she is your friend.
 
 
-_Context tokens: 337 | Dropped: 7 | Latency: 1603ms_
+_Context tokens: 336 | Dropped: 7 | Latency: 1441ms_
 
 #### Turn 8 🔍 `[recall]` ✅
 
@@ -1289,17 +1166,20 @@ _Context tokens: 337 | Dropped: 7 | Latency: 1603ms_
 
 ```
 - Lena: job: freelance photographer, location: Berlin, specialty: travel and food photography
+- Tariq: job: high school maths teacher, location: London, years of experience: 8
 - Sam: job: graphic designer, location: Melbourne, employer: Pixel & Ink
-- Tariq: job: high school maths teacher, location: London, years of experience: 8, relation: close friend
-- Zoe: job: software developer, location: Toronto, work: mobile apps, employer: AppLaunch
+- Zoe: job: software developer, location: Toronto, work: mobile apps
+  → friend: Tariq
+  → for: AppLaunch
+- AppLaunch
 ```
 </details>
 
-**Assistant:** Lena specializes in **travel and food photography** and is based in **Berlin**.
+**Assistant:** Lena is based in **Berlin** and specializes in **travel and food photography**.
 
 **Expected:** `lena, berlin, travel, food` → ✅ All found
 
-_Context tokens: 335 | Dropped: 12 | Latency: 344ms_
+_Context tokens: 339 | Dropped: 12 | Latency: 346ms_
 
 #### Turn 9 💬 `[distractor]` ✅
 
@@ -1308,8 +1188,11 @@ _Context tokens: 335 | Dropped: 12 | Latency: 344ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Tariq: job: high school maths teacher, location: London, years of experience: 8, relation: close friend
-- Zoe: job: software developer, location: Toronto, work: mobile apps, employer: AppLaunch
+- Tariq: job: high school maths teacher, location: London, years of experience: 8
+- Zoe: job: software developer, location: Toronto, work: mobile apps
+  → friend: Tariq
+  → for: AppLaunch
+- AppLaunch
 ```
 </details>
 
@@ -1317,27 +1200,32 @@ _Context tokens: 335 | Dropped: 12 | Latency: 344ms_
 
 **Expected:** `300` → ✅ All found
 
-_Context tokens: 334 | Dropped: 12 | Latency: 527ms_
+_Context tokens: 338 | Dropped: 12 | Latency: 521ms_
 
 #### Turn 10 ✏️ `[update]` ✅
 
 **User:** Big life update — Sam has moved from Melbourne to Sydney! And she's left Pixel & Ink to go freelance.
 
-_📥 Facts extracted: **4** | KG nodes: 4 → 4 (+0)_
+_📥 Facts extracted: **2** | KG nodes: 5 → 7 (+2)_
 
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Sam: job: graphic designer, location: Sydney, employer: Pixel & Ink, previousLocation: Melbourne, employmentStatus: freelance
+- Sam: job: freelance, location: Sydney, employer: Pixel & Ink
+  → moved from: Melbourne
+  → left: Pixel & Ink
+- Melbourne
+- Pixel & Ink
 - Lena: job: freelance photographer, location: Berlin, specialty: travel and food photography
+- Tariq: job: high school maths teacher, location: London, years of experience: 8
 ```
 </details>
 
-**Assistant:** That's a significant update! Sam has indeed moved from **Melbourne** to **Sydney** and has transitioned from working at **Pixel & Ink** to working as a **freelance graphic designer**.
+**Assistant:** Got it! I've updated the records: Sam has moved from **Melbourne** to **Sydney** and is now working as a **freelancer**, having left **Pixel & Ink**.
 
 **Expected:** `sam, sydney, freelance` → ✅ All found
 
-_Context tokens: 334 | Dropped: 14 | Latency: 2012ms_
+_Context tokens: 336 | Dropped: 15 | Latency: 1306ms_
 
 #### Turn 11 🔍 `[recall]` ✅
 
@@ -1346,28 +1234,45 @@ _Context tokens: 334 | Dropped: 14 | Latency: 2012ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Zoe: job: software developer, location: Toronto, work: mobile apps, employer: AppLaunch
-- Sam: job: graphic designer, location: Sydney, employer: Pixel & Ink, previousLocation: Melbourne, employmentStatus: freelance
-- Tariq: job: high school maths teacher, location: London, years of experience: 8, relation: close friend
+- Zoe: job: software developer, location: Toronto, work: mobile apps
+  → friend: Tariq
+  → for: AppLaunch
+- Tariq: job: high school maths teacher, location: London, years of experience: 8
+- AppLaunch
+- Sam: job: freelance, location: Sydney, employer: Pixel & Ink
+  → moved from: Melbourne
+  → left: Pixel & Ink
+- Melbourne
+- Pixel & Ink
 - Lena: job: freelance photographer, location: Berlin, specialty: travel and food photography
 ```
 </details>
 
-**Assistant:** Zoe works as a **software developer** in **Toronto**, where she creates **mobile apps** for her employer, **AppLaunch**.
+**Assistant:** Zoe works as a **software developer** in **Toronto**, where she creates **mobile apps** for **AppLaunch**.
 
 **Expected:** `zoe, toronto, applaunch, mobile` → ✅ All found
 
-_Context tokens: 348 | Dropped: 18 | Latency: 439ms_
+_Context tokens: 343 | Dropped: 18 | Latency: 423ms_
 
 #### Turn 12 💬 `[distractor]` ✅
 
 **User:** Who wrote the novel '1984'?
 
-**Assistant:** The novel *1984* was written by **George Orwell**.
+<details><summary>📚 KG Memory Injected</summary>
+
+```
+- Tariq: job: high school maths teacher, location: London, years of experience: 8
+- AppLaunch
+- Melbourne
+- Pixel & Ink
+```
+</details>
+
+**Assistant:** The novel **'1984'** was written by **George Orwell**.
 
 **Expected:** `orwell, george` → ✅ All found
 
-_Context tokens: 347 | Dropped: 15 | Latency: 342ms_
+_Context tokens: 346 | Dropped: 17 | Latency: 355ms_
 
 #### Turn 13 ✅ `[verify_update]` ✅
 
@@ -1376,10 +1281,17 @@ _Context tokens: 347 | Dropped: 15 | Latency: 342ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Sam: job: graphic designer, location: Sydney, employer: Pixel & Ink, previousLocation: Melbourne, employmentStatus: freelance
-- Tariq: job: high school maths teacher, location: London, years of experience: 8, relation: close friend
+- Sam: job: freelance, location: Sydney, employer: Pixel & Ink
+  → moved from: Melbourne
+  → left: Pixel & Ink
+- Melbourne
+- Pixel & Ink
+- Tariq: job: high school maths teacher, location: London, years of experience: 8
 - Lena: job: freelance photographer, location: Berlin, specialty: travel and food photography
-- Zoe: job: software developer, location: Toronto, work: mobile apps, employer: AppLaunch
+- Zoe: job: software developer, location: Toronto, work: mobile apps
+  → friend: Tariq
+  → for: AppLaunch
+- AppLaunch
 ```
 </details>
 
@@ -1388,7 +1300,7 @@ _Context tokens: 347 | Dropped: 15 | Latency: 342ms_
 **Expected:** `sydney` → ✅ All found
 **Forbidden:** `melbourne` → ✅ None found
 
-_Context tokens: 340 | Dropped: 20 | Latency: 275ms_
+_Context tokens: 341 | Dropped: 20 | Latency: 290ms_
 
 #### Turn 14 🔍 `[recall]` ✅
 
@@ -1397,15 +1309,18 @@ _Context tokens: 340 | Dropped: 20 | Latency: 275ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Tariq: job: high school maths teacher, location: London, years of experience: 8, relation: close friend
+- Tariq: job: high school maths teacher, location: London, years of experience: 8
+- AppLaunch
+- Melbourne
+- Pixel & Ink
 ```
 </details>
 
-**Assistant:** Tariq is a **high school maths teacher** based in **London** and has **8 years of experience** in the field.
+**Assistant:** Tariq is a **high school maths teacher** based in **London** with **8 years of experience**.
 
 **Expected:** `tariq, london, 8` → ✅ All found
 
-_Context tokens: 344 | Dropped: 19 | Latency: 434ms_
+_Context tokens: 337 | Dropped: 19 | Latency: 407ms_
 
 #### Turn 15 ✅ `[verify_update]` ✅
 
@@ -1414,19 +1329,26 @@ _Context tokens: 344 | Dropped: 19 | Latency: 434ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Sam: job: graphic designer, location: Sydney, employer: Pixel & Ink, previousLocation: Melbourne, employmentStatus: freelance
-- Zoe: job: software developer, location: Toronto, work: mobile apps, employer: AppLaunch
-- Tariq: job: high school maths teacher, location: London, years of experience: 8, relation: close friend
+- Sam: job: freelance, location: Sydney, employer: Pixel & Ink
+  → moved from: Melbourne
+  → left: Pixel & Ink
+- Melbourne
+- Pixel & Ink
+- Zoe: job: software developer, location: Toronto, work: mobile apps
+  → friend: Tariq
+  → for: AppLaunch
+- Tariq: job: high school maths teacher, location: London, years of experience: 8
+- AppLaunch
 - Lena: job: freelance photographer, location: Berlin, specialty: travel and food photography
 ```
 </details>
 
-**Assistant:** Sam is currently based in **Sydney** and works as a **freelance** graphic designer. She is **no longer employed** by Pixel & Ink, as her current status is listed as freelance.
+**Assistant:** Sam is currently working as a **freelancer** in **Sydney**. She **no longer works at Pixel & Ink**, as she has left the company.
 
 **Expected:** `sydney, freelance` → ✅ All found
 **Forbidden:** `melbourne` → ✅ None found
 
-_Context tokens: 343 | Dropped: 25 | Latency: 547ms_
+_Context tokens: 342 | Dropped: 25 | Latency: 490ms_
 
 ## Scenario: Mixed Facts with Multiple Concurrent Updates
 
@@ -1449,10 +1371,10 @@ _📥 Facts extracted: **4** | KG nodes: 0 → 1 (+1)_
 ```
 </details>
 
-**Assistant:** Hello Mei! I've noted that you're a 32-year-old UX researcher at VitalMetrics. Is there anything specific you'd like to discuss or work on?
+**Assistant:** Hello Mei! I've noted that you're a 32-year-old UX researcher at VitalMetrics. Is there anything specific you'd like to discuss or work on regarding your role?
 
 
-_Context tokens: 198 | Dropped: 0 | Latency: 1374ms_
+_Context tokens: 198 | Dropped: 0 | Latency: 1398ms_
 
 #### Turn 2 📝 `[tell]` ✅
 
@@ -1469,10 +1391,10 @@ _📥 Facts extracted: **3** | KG nodes: 1 → 2 (+1)_
 ```
 </details>
 
-**Assistant:** Got it, Mei. I've updated my records: you live in Singapore, commute via MRT, and have been with VitalMetrics for 4 years. Anything else you'd like to share or discuss?
+**Assistant:** Got it, Mei. I've updated my records: you live in Singapore, commute via MRT, and have been working at VitalMetrics for 4 years. Anything else you'd like to share or need help with?
 
 
-_Context tokens: 290 | Dropped: 0 | Latency: 1435ms_
+_Context tokens: 295 | Dropped: 0 | Latency: 1457ms_
 
 #### Turn 3 📝 `[tell]` ✅
 
@@ -1483,16 +1405,16 @@ _📥 Facts extracted: **5** | KG nodes: 2 → 2 (+0)_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Mei Tanaka: name: Mei Tanaka, age: 32, job: UX researcher, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, schedule: Tuesday and Thursday, activity: taking lessons, tutor: Carlos
+- Mei Tanaka: name: Mei Tanaka, age: 32, job: UX researcher, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, activity: taking lessons, frequency: every Tuesday and Thursday, tutor: Carlos
   → works_at: VitalMetrics
 - VitalMetrics
 ```
 </details>
 
-**Assistant:** Noted, Mei. I've added that you're learning Spanish at a B1 level, taking lessons on Tuesdays and Thursdays with your tutor, Carlos. Is there anything specific about your language learning journey you'd like to discuss?
+**Assistant:** Noted, Mei. I've added that you're learning Spanish at a B1 level, taking lessons every Tuesday and Thursday with your tutor, Carlos. Is there anything specific about your language learning or work you'd like to discuss?
 
 
-_Context tokens: 330 | Dropped: 2 | Latency: 1698ms_
+_Context tokens: 335 | Dropped: 2 | Latency: 2259ms_
 
 #### Turn 4 🔍 `[recall]` ❌
 
@@ -1501,17 +1423,17 @@ _Context tokens: 330 | Dropped: 2 | Latency: 1698ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Mei Tanaka: name: Mei Tanaka, age: 32, job: UX researcher, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, schedule: Tuesday and Thursday, activity: taking lessons, tutor: Carlos
+- Mei Tanaka: name: Mei Tanaka, age: 32, job: UX researcher, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, activity: taking lessons, frequency: every Tuesday and Thursday, tutor: Carlos
   → works_at: VitalMetrics
 - VitalMetrics
 ```
 </details>
 
-**Assistant:** Your job is a UX researcher at a company called **VitalMetrics**, based in Singapore. You've been working there for 4 years.
+**Assistant:** Your job is UX researcher, and you work at VitalMetrics in Singapore.
 
 **Expected:** `mei, ux, vitalmetrics` → ❌ Missing: `mei`
 
-_Context tokens: 330 | Dropped: 4 | Latency: 443ms_
+_Context tokens: 331 | Dropped: 4 | Latency: 331ms_
 
 #### Turn 5 📝 `[tell]` ✅
 
@@ -1523,16 +1445,16 @@ _📥 Facts extracted: **3** | KG nodes: 2 → 3 (+1)_
 
 ```
 - HealthSync: project: work, goal: redesign patient onboarding flow to reduce drop-off rates
-- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, schedule: Tuesday and Thursday, activity: taking lessons, tutor: Carlos
+- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, activity: taking lessons, frequency: every Tuesday and Thursday, tutor: Carlos
   → works_at: VitalMetrics
 - VitalMetrics
 ```
 </details>
 
-**Assistant:** Got it. I've noted that your current project is **HealthSync**, focused on redesigning the patient onboarding flow to reduce drop-off rates.
+**Assistant:** Got it. I've noted that your current project is **HealthSync**, where the goal is to redesign the patient onboarding flow to reduce drop-off rates.
 
 
-_Context tokens: 329 | Dropped: 6 | Latency: 1217ms_
+_Context tokens: 318 | Dropped: 6 | Latency: 1230ms_
 
 #### Turn 6 💬 `[distractor]` ✅
 
@@ -1541,7 +1463,7 @@ _Context tokens: 329 | Dropped: 6 | Latency: 1217ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, schedule: Tuesday and Thursday, activity: taking lessons, tutor: Carlos
+- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, activity: taking lessons, frequency: every Tuesday and Thursday, tutor: Carlos
   → works_at: VitalMetrics
 - VitalMetrics
 ```
@@ -1549,11 +1471,11 @@ _Context tokens: 329 | Dropped: 6 | Latency: 1217ms_
 
 **Assistant:** The most spoken language in the world by native speakers is **Mandarin Chinese**.
 
-It is estimated that over 900 million people speak Mandarin as their first language, making it the most widely spoken native language globally.
+It is estimated that over 1 billion people speak Mandarin as their first language, making it significantly more widely spoken natively than any other language, including English.
 
 **Expected:** `mandarin, chinese` → ✅ All found
 
-_Context tokens: 318 | Dropped: 8 | Latency: 582ms_
+_Context tokens: 344 | Dropped: 7 | Latency: 610ms_
 
 #### Turn 7 🔍 `[recall]` ✅
 
@@ -1562,17 +1484,17 @@ _Context tokens: 318 | Dropped: 8 | Latency: 582ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, schedule: Tuesday and Thursday, activity: taking lessons, tutor: Carlos
+- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, activity: taking lessons, frequency: every Tuesday and Thursday, tutor: Carlos
   → works_at: VitalMetrics
 - VitalMetrics
 ```
 </details>
 
-**Assistant:** You are learning **Spanish**, and your proficiency level is **B1**.
+**Assistant:** You are learning **Spanish** and you are currently at **B1** proficiency. You are taking lessons every Tuesday and Thursday with your tutor, Carlos.
 
 **Expected:** `spanish, b1` → ✅ All found
 
-_Context tokens: 322 | Dropped: 10 | Latency: 329ms_
+_Context tokens: 333 | Dropped: 10 | Latency: 452ms_
 
 #### Turn 8 🔍 `[recall]` ❌
 
@@ -1581,7 +1503,7 @@ _Context tokens: 322 | Dropped: 10 | Latency: 329ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, schedule: Tuesday and Thursday, activity: taking lessons, tutor: Carlos
+- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, activity: taking lessons, frequency: every Tuesday and Thursday, tutor: Carlos
   → works_at: VitalMetrics
 - VitalMetrics
 ```
@@ -1591,7 +1513,7 @@ _Context tokens: 322 | Dropped: 10 | Latency: 329ms_
 
 **Expected:** `4, mrt, singapore` → ❌ Missing: `singapore`
 
-_Context tokens: 341 | Dropped: 11 | Latency: 397ms_
+_Context tokens: 302 | Dropped: 12 | Latency: 397ms_
 
 #### Turn 9 ✏️ `[update]` ✅
 
@@ -1602,18 +1524,18 @@ _📥 Facts extracted: **3** | KG nodes: 3 → 4 (+1)_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- user: language: Spanish, proficiency_level: B2, previous_proficiency_level: B1
-- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, schedule: Tuesday and Thursday, activity: taking lessons, tutor: Carlos
+- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, activity: taking lessons, frequency: every Tuesday and Thursday, tutor: Carlos
   → works_at: VitalMetrics
 - VitalMetrics
+- user: language: Spanish, proficiency: B2, previousProficiency: B1
 ```
 </details>
 
-**Assistant:** That's great news! I've updated your language proficiency record: you've moved from **B1** to **B2** in Spanish.
+**Assistant:** That's great news! Your Spanish proficiency has been updated from **B1 to B2**. You've been taking lessons every Tuesday and Thursday with your tutor, **Carlos**, to help you progress.
 
 **Expected:** `b2, spanish, passed` → ❌ Missing: `passed`
 
-_Context tokens: 334 | Dropped: 13 | Latency: 1291ms_
+_Context tokens: 312 | Dropped: 14 | Latency: 1363ms_
 
 #### Turn 10 💬 `[distractor]` ✅
 
@@ -1622,25 +1544,25 @@ _Context tokens: 334 | Dropped: 13 | Latency: 1291ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, schedule: Tuesday and Thursday, activity: taking lessons, tutor: Carlos
+- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, activity: taking lessons, frequency: every Tuesday and Thursday, tutor: Carlos
   → works_at: VitalMetrics
 - VitalMetrics
 ```
 </details>
 
-**Assistant:** UX research involves understanding user needs, behaviors, and motivations to inform design decisions. It typically includes methods like:
+**Assistant:** UX research involves understanding user needs, behaviors, and motivations to design products that are usable, accessible, and valuable. It typically includes:
 
-- **User interviews** – One-on-one conversations to gather insights.
-- **Surveys** – Collecting data from a larger group of users.
-- **Usability testing** – Observing users interacting with a product to identify issues.
-- **Personas and journey maps** – Creating representative user profiles and visualizing user experiences.
-- **A/B testing** – Comparing two versions of a design to see which performs better.
+- **User Interviews & Surveys**: Gathering qualitative and quantitative feedback.
+- **Observation & Contextual Inquiry**: Watching users interact with products in real-world settings.
+- **Usability Testing**: Observing how users perform tasks to identify pain points.
+- **Personas & Journey Maps**: Creating representative user profiles and mapping their experiences.
+- **Data Analysis**: Interpreting findings to inform design decisions.
 
-The goal is to create products that are intuitive, useful, and enjoyable for users.
+The goal is to ensure products solve real user problems while delivering a positive experience.
 
 **Expected:** `user, research` → ✅ All found
 
-_Context tokens: 340 | Dropped: 14 | Latency: 1261ms_
+_Context tokens: 341 | Dropped: 15 | Latency: 1238ms_
 
 #### Turn 11 🔍 `[recall]` ❌
 
@@ -1650,17 +1572,17 @@ _Context tokens: 340 | Dropped: 14 | Latency: 1261ms_
 
 ```
 - VitalMetrics
-- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, schedule: Tuesday and Thursday, activity: taking lessons, tutor: Carlos
+- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, activity: taking lessons, frequency: every Tuesday and Thursday, tutor: Carlos
   → works_at: VitalMetrics
 - HealthSync: project: work, goal: redesign patient onboarding flow to reduce drop-off rates
 ```
 </details>
 
-**Assistant:** You are working on a project at VitalMetrics aimed at **redesigning the patient onboarding flow to reduce drop-off rates**.
+**Assistant:** You are working on a project at VitalMetrics to redesign the patient onboarding flow with the goal of reducing drop-off rates.
 
 **Expected:** `healthsync, onboarding` → ❌ Missing: `healthsync`
 
-_Context tokens: 262 | Dropped: 20 | Latency: 409ms_
+_Context tokens: 264 | Dropped: 20 | Latency: 394ms_
 
 #### Turn 12 ✏️ `[update]` ✅
 
@@ -1671,18 +1593,18 @@ _📥 Facts extracted: **1** | KG nodes: 4 → 4 (+0)_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- user: language: Spanish, proficiency_level: B2, previous_proficiency_level: B1, location: Jurong East neighbourhood of Singapore
-- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, schedule: Tuesday and Thursday, activity: taking lessons, tutor: Carlos
+- user: language: Spanish, proficiency: B2, previousProficiency: B1, location: Jurong East neighbourhood of Singapore
+- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, activity: taking lessons, frequency: every Tuesday and Thursday, tutor: Carlos
   → works_at: VitalMetrics
 - VitalMetrics
 ```
 </details>
 
-**Assistant:** I've updated your location to the **Jurong East neighbourhood of Singapore**.
+**Assistant:** Got it! I've updated my records: you've moved to the Jurong East neighbourhood in Singapore. Is there anything else you'd like to share or ask about?
 
-**Expected:** `jurong, moved` → ❌ Missing: `moved`
+**Expected:** `jurong, moved` → ✅ All found
 
-_Context tokens: 341 | Dropped: 20 | Latency: 782ms_
+_Context tokens: 340 | Dropped: 20 | Latency: 934ms_
 
 #### Turn 13 ✅ `[verify_update]` ❌
 
@@ -1691,20 +1613,20 @@ _Context tokens: 341 | Dropped: 20 | Latency: 782ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- user: language: Spanish, proficiency_level: B2, previous_proficiency_level: B1, location: Jurong East neighbourhood of Singapore
-- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, schedule: Tuesday and Thursday, activity: taking lessons, tutor: Carlos
+- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, activity: taking lessons, frequency: every Tuesday and Thursday, tutor: Carlos
   → works_at: VitalMetrics
 - VitalMetrics
+- user: language: Spanish, proficiency: B2, previousProficiency: B1, location: Jurong East neighbourhood of Singapore
 - HealthSync: project: work, goal: redesign patient onboarding flow to reduce drop-off rates
 ```
 </details>
 
-**Assistant:** Your current proficiency level in Spanish is **B2**. You previously were at B1.
+**Assistant:** Your current proficiency level in Spanish is **B2**. Previously, you were at B1, and you've been taking lessons with Carlos every Tuesday and Thursday to work on your skills.
 
 **Expected:** `b2` → ✅ All found
 **Forbidden:** `b1` → ❌ Found: `b1`
 
-_Context tokens: 350 | Dropped: 22 | Latency: 355ms_
+_Context tokens: 332 | Dropped: 23 | Latency: 505ms_
 
 #### Turn 14 🔍 `[recall]` ✅
 
@@ -1713,7 +1635,7 @@ _Context tokens: 350 | Dropped: 22 | Latency: 355ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, schedule: Tuesday and Thursday, activity: taking lessons, tutor: Carlos
+- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, activity: taking lessons, frequency: every Tuesday and Thursday, tutor: Carlos
   → works_at: VitalMetrics
 - VitalMetrics
 ```
@@ -1723,7 +1645,7 @@ _Context tokens: 350 | Dropped: 22 | Latency: 355ms_
 
 **Expected:** `mei, tanaka, 32` → ✅ All found
 
-_Context tokens: 331 | Dropped: 22 | Latency: 365ms_
+_Context tokens: 341 | Dropped: 23 | Latency: 366ms_
 
 #### Turn 15 ✅ `[verify_update]` ✅
 
@@ -1732,15 +1654,15 @@ _Context tokens: 331 | Dropped: 22 | Latency: 365ms_
 <details><summary>📚 KG Memory Injected</summary>
 
 ```
-- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, schedule: Tuesday and Thursday, activity: taking lessons, tutor: Carlos
+- Mei Tanaka: name: Mei Tanaka, age: 32, job: HealthSync, company: VitalMetrics, location: Singapore, commute_method: MRT, employer_tenure: 4 years, language: Spanish, proficiency: B1, activity: taking lessons, frequency: every Tuesday and Thursday, tutor: Carlos
   → works_at: VitalMetrics
 - VitalMetrics
-- user: language: Spanish, proficiency_level: B2, previous_proficiency_level: B1, location: Jurong East neighbourhood of Singapore
+- user: language: Spanish, proficiency: B2, previousProficiency: B1, location: Jurong East neighbourhood of Singapore
 ```
 </details>
 
-**Assistant:** You are living in the **Jurong East** neighbourhood of Singapore.
+**Assistant:** You are currently living in the **Jurong East** neighbourhood of Singapore.
 
 **Expected:** `jurong` → ✅ All found
 
-_Context tokens: 338 | Dropped: 24 | Latency: 324ms_
+_Context tokens: 347 | Dropped: 25 | Latency: 329ms_

@@ -63,6 +63,7 @@ async function runQuick(): Promise<void> {
   const reporter = new MarkdownReporter(OUTPUT_DIR);
 
   const config: RunConfig = {
+    memoryType: 'simple',
     graph: { ...DEFAULT_GRAPH_CONFIG, type: 'simple' },
     agent: { ...DEFAULT_AGENT_CONFIG, maxContextTokens: 800 },
     maxTurns: 10,
@@ -84,6 +85,7 @@ async function runSingle(graphType: GraphType, contextTokens: number, scenarioId
   const reporter = new MarkdownReporter(OUTPUT_DIR);
 
   const config: RunConfig = {
+    memoryType: graphType,
     graph: {
       ...DEFAULT_GRAPH_CONFIG,
       type: graphType,

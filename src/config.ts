@@ -1,6 +1,7 @@
 // Core configuration types and defaults for the KG testing harness
 
 export type GraphType = 'simple' | 'hierarchical' | 'multi' | 'weighted';
+export type MemoryType = GraphType | 'rag';
 
 export interface GraphConfig {
   type: GraphType;
@@ -19,9 +20,10 @@ export interface GraphConfig {
 export interface AgentConfig {
   ollamaEndpoint: string;
   model: string;
-  /** Max tokens kept in conversation context (forces KG use) */
+  embeddingModel: string;
+  /** Max tokens kept in conversation context (forces memory use) */
   maxContextTokens: number;
-  /** Number of KG search results injected per turn */
+  /** Number of memory results injected per turn */
   topK: number;
   /** Temperature for generation */
   temperature: number;
@@ -30,6 +32,7 @@ export interface AgentConfig {
 }
 
 export interface RunConfig {
+  memoryType: MemoryType;
   graph: GraphConfig;
   agent: AgentConfig;
   /** Max turns per test scenario */
@@ -52,12 +55,14 @@ export const DEFAULT_GRAPH_CONFIG: GraphConfig = {
 export const DEFAULT_AGENT_CONFIG: AgentConfig = {
   ollamaEndpoint: 'http://192.168.86.27:11434',
   model: 'qwen3.5:4b',
+  embeddingModel: 'nomic-embed-text',
   maxContextTokens: 800,
   topK: 5,
   temperature: 0.3,
 };
 
 export const DEFAULT_RUN_CONFIG: RunConfig = {
+  memoryType: 'simple',
   graph: DEFAULT_GRAPH_CONFIG,
   agent: DEFAULT_AGENT_CONFIG,
   maxTurns: 10,
@@ -66,16 +71,17 @@ export const DEFAULT_RUN_CONFIG: RunConfig = {
 };
 
 /** Build all parameter combinations for the research sweep.
- * Sweeps graph type × context window to show how memory window size affects
- * recall, update, and verify accuracy as context grows from 400 → 4096 tokens. */
+ * Sweeps memory type × context window: 4 KG graph types + 1 RAG × 4 context sizes = 20 configs. */
 export function buildResearchMatrix(): RunConfig[] {
   const configs: RunConfig[] = [];
   const graphTypes: GraphType[] = ['simple', 'hierarchical', 'multi', 'weighted'];
   const contextLimits = [400, 800, 1500, 4096];
 
+  // KG configurations
   for (const type of graphTypes) {
     for (const maxCtx of contextLimits) {
       configs.push({
+        memoryType: type,
         graph: {
           type,
           graphDepth: 3,
@@ -94,5 +100,21 @@ export function buildResearchMatrix(): RunConfig[] {
       });
     }
   }
+
+  // RAG configurations
+  for (const maxCtx of contextLimits) {
+    configs.push({
+      memoryType: 'rag',
+      graph: DEFAULT_GRAPH_CONFIG,   // unused for RAG but required by type
+      agent: {
+        ...DEFAULT_AGENT_CONFIG,
+        maxContextTokens: maxCtx,
+      },
+      maxTurns: 20,
+      outputDir: './results',
+      runLabel: `rag_ctx${maxCtx}`,
+    });
+  }
+
   return configs;
 }
