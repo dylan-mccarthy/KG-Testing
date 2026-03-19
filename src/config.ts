@@ -66,12 +66,12 @@ export const DEFAULT_RUN_CONFIG: RunConfig = {
 };
 
 /** Build all parameter combinations for the research sweep.
- * Phase 2 focuses on graph type × context window (depth/subTrees don't affect
- * extraction-populated graphs meaningfully — same depth is kept for consistency). */
+ * Sweeps graph type × context window to show how memory window size affects
+ * recall, update, and verify accuracy as context grows from 400 → 4096 tokens. */
 export function buildResearchMatrix(): RunConfig[] {
   const configs: RunConfig[] = [];
   const graphTypes: GraphType[] = ['simple', 'hierarchical', 'multi', 'weighted'];
-  const contextLimits = [400, 800, 1500];
+  const contextLimits = [400, 800, 1500, 4096];
 
   for (const type of graphTypes) {
     for (const maxCtx of contextLimits) {
