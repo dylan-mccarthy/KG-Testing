@@ -479,3 +479,24 @@ Pass / Fail
 **Phase 15 is the new best at 95.8% overall** — highest recall (93.6%), perfect update accuracy (100%),
 and robust to synonym and word-form variation. The remaining ~4% failures are real KG retrieval
 and model nondeterminism issues, not validation bugs.
+
+## Phase 16 Matrix — 2026-03-20T19:52:07.198Z
+
+| Run | Overall | Recall | Update | Verify | Lat |
+|-----|---------|--------|--------|--------|-----|
+| simple_phase16_h16384_kg32768 | 97.8% | 96.7% | 100.0% | 95.8% | 1538ms |
+| hierarchical_phase16_h8192_kg32768 | 97.8% | 96.7% | 100.0% | 95.8% | 1945ms |
+| simple_phase16_h8192_kg32768 | 97.2% | 96.7% | 100.0% | 91.7% | 1994ms |
+| multi_phase16_h8192_kg32768 | 97.2% | 95.2% | 100.0% | 95.8% | 1998ms |
+| hierarchical_phase16_h16384_kg32768 | 96.5% | 96.7% | 100.0% | 87.5% | 2118ms |
+| weighted_phase16_h1024_kg32768 | 96.5% | 95.2% | 100.0% | 91.7% | 1650ms |
+| hierarchical_phase16_h4096_kg32768 | 96.3% | 93.3% | 100.0% | 95.8% | 1814ms |
+| simple_phase16_h1024_kg32768 | 95.6% | 91.8% | 100.0% | 95.8% | 1748ms |
+| simple_phase16_h4096_kg32768 | 95.6% | 93.3% | 100.0% | 91.7% | 1733ms |
+| hierarchical_phase16_h1024_kg32768 | 95.6% | 93.3% | 100.0% | 91.7% | 1730ms |
+| multi_phase16_h4096_kg32768 | 95.6% | 93.3% | 100.0% | 91.7% | 1887ms |
+| multi_phase16_h16384_kg32768 | 95.6% | 91.8% | 100.0% | 95.8% | 2064ms |
+| weighted_phase16_h4096_kg32768 | 95.0% | 90.3% | 100.0% | 95.8% | 1561ms |
+| weighted_phase16_h8192_kg32768 | 94.3% | 91.8% | 100.0% | 87.5% | 1796ms |
+| weighted_phase16_h16384_kg32768 | 94.3% | 90.3% | 100.0% | 91.7% | 2111ms |
+| multi_phase16_h1024_kg32768 | 93.0% | 88.8% | 100.0% | 87.5% | 1824ms |

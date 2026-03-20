@@ -35,7 +35,7 @@ async function checkOllama(model = MODEL): Promise<boolean> {
 }
 
 function parseArgs(): {
-  mode: 'quick' | 'single' | 'research' | 'phase5' | 'phase6' | 'phase7' | 'phase8' | 'phase9' | 'phase10' | 'phase11' | 'phase12' | 'phase13' | 'phase14' | 'phase15';
+  mode: 'quick' | 'single' | 'research' | 'phase5' | 'phase6' | 'phase7' | 'phase8' | 'phase9' | 'phase10' | 'phase11' | 'phase12' | 'phase13' | 'phase14' | 'phase15' | 'phase16';
   graphType?: GraphType;
   contextTokens?: number;
   scenarioId?: string;
@@ -63,6 +63,7 @@ function parseArgs(): {
   if (flags['phase13'] === 'true') return { mode: 'phase13' };
   if (flags['phase14'] === 'true') return { mode: 'phase14' };
   if (flags['phase15'] === 'true') return { mode: 'phase15' };
+  if (flags['phase16'] === 'true') return { mode: 'phase16' };
 
   return {
     mode: 'single',
@@ -313,6 +314,111 @@ async function runPhase15(): Promise<void> {
   const delta10 = (result.overallAccuracy * 100 - 90.1).toFixed(1);
   console.log(`📊 Delta vs Phase 14: ${Number(delta14) >= 0 ? '+' : ''}${delta14}%`);
   console.log(`📊 Delta vs Phase 10: ${Number(delta10) >= 0 ? '+' : ''}${delta10}%`);
+}
+
+// ── Phase 16 ─────────────────────────────────────────────────────────────────
+
+const P16_GRAPH_TYPES = [
+  { type: 'simple'       as GraphType, weightedEdges: false, multiGraph: false, graphDepth: 3, subTrees: 3 },
+  { type: 'hierarchical' as GraphType, weightedEdges: false, multiGraph: false, graphDepth: 4, subTrees: 3 },
+  { type: 'multi'        as GraphType, weightedEdges: false, multiGraph: true,  graphDepth: 3, subTrees: 3 },
+  { type: 'weighted'     as GraphType, weightedEdges: true,  multiGraph: false, graphDepth: 3, subTrees: 3 },
+] as const;
+
+const P16_HISTORY_SIZES = [1024, 4096, 8192, 16384] as const;
+const P16_KG_CTX = 32768;
+
+async function runPhase16(): Promise<void> {
+  const TOTAL = P16_GRAPH_TYPES.length * P16_HISTORY_SIZES.length;
+  console.log('\n🚀 PHASE 16: Graph Type × Context Size Matrix');
+  console.log(`   Graph types : ${P16_GRAPH_TYPES.map(g => g.type).join(', ')}`);
+  console.log(`   History ctx : ${P16_HISTORY_SIZES.map(h => `${h.toLocaleString()}t`).join(', ')}`);
+  console.log(`   KG ctx      : ${P16_KG_CTX.toLocaleString()}t (fixed)`);
+  console.log('   Validation  : Phase 15 NLP pipeline (stem → pronoun → embedding → judge)');
+  console.log('   Pre-proc    : Phase 15 MessagePreprocessor (entity guard + explicit updates)');
+  console.log(`   Total runs  : ${TOTAL} (${P16_GRAPH_TYPES.length} graph types × ${P16_HISTORY_SIZES.length} context sizes)\n`);
+
+  const embeddingsClient = new (await import('./rag')).EmbeddingsClient({
+    endpoint: DEFAULT_AGENT_CONFIG.ollamaEndpoint,
+    model: 'nomic-embed-text',
+  });
+  const judgeConfig = { endpoint: DEFAULT_AGENT_CONFIG.ollamaEndpoint, model: MODEL };
+  const runner = new TestRunner(true, judgeConfig, embeddingsClient);
+  const reporter = new MarkdownReporter(OUTPUT_DIR);
+  const allScenarios = [...ALL_SCENARIOS, engineeringOrgDeepDive];
+
+  const configs: RunConfig[] = [];
+  for (const g of P16_GRAPH_TYPES) {
+    for (const h of P16_HISTORY_SIZES) {
+      configs.push({
+        memoryType: g.type,
+        graph: {
+          ...DEFAULT_GRAPH_CONFIG,
+          type: g.type,
+          weightedEdges: g.weightedEdges,
+          multiGraph: g.multiGraph,
+          graphDepth: g.graphDepth,
+          subTrees: g.subTrees,
+        },
+        agent: {
+          ...DEFAULT_AGENT_CONFIG,
+          model: MODEL,
+          maxContextTokens: h,
+          maxKgTokens: P16_KG_CTX,
+          numCtx: h + P16_KG_CTX + 1024,
+          timeoutMs: 180000,
+          embeddingModel: 'nomic-embed-text',
+        },
+        maxTurns: 60,
+        outputDir: OUTPUT_DIR,
+        runLabel: `${g.type}_phase16_h${h}_kg${P16_KG_CTX}`,
+      });
+    }
+  }
+
+  console.log(`▶ Starting matrix run of ${configs.length} configs…\n`);
+  const results = await runner.runMatrix(configs, allScenarios);
+
+  // Write individual run reports
+  for (const result of results) {
+    reporter.writeRunReport(result);
+  }
+
+  // Write matrix summary
+  const graphTypeNames = P16_GRAPH_TYPES.map(g => g.type) as string[];
+  const historySizes = [...P16_HISTORY_SIZES] as number[];
+  const matrixPath = reporter.writeMatrixReport(results, graphTypeNames, historySizes, P16_KG_CTX);
+  console.log(`\n📄 Matrix summary: ${matrixPath}`);
+
+  // Console summary table
+  console.log('\n📊 PHASE 16 OVERALL ACCURACY MATRIX:\n');
+  const hdrRow = P16_HISTORY_SIZES.map(h => `h${h}`.padEnd(8)).join(' ');
+  console.log(`${'Graph Type'.padEnd(14)} ${hdrRow} Best`);
+  console.log('─'.repeat(60));
+  for (const g of P16_GRAPH_TYPES) {
+    const vals = P16_HISTORY_SIZES.map(h => {
+      const r = results.find(x => x.runLabel === `${g.type}_phase16_h${h}_kg${P16_KG_CTX}`);
+      return r ? r.overallAccuracy * 100 : null;
+    });
+    const best = vals.filter(v => v !== null).reduce((a, b) => a! > b! ? a : b, 0 as number | null);
+    const cells = vals.map(v => (v === null ? 'N/A' : `${v.toFixed(1)}%`).padEnd(8)).join(' ');
+    console.log(`${g.type.padEnd(14)} ${cells} ${best !== null ? `${best.toFixed(1)}%` : 'N/A'}`);
+  }
+
+  const overallBest = results.reduce((a, b) => a.overallAccuracy > b.overallAccuracy ? a : b);
+  console.log(`\n🏆 Best: ${overallBest.runLabel} — ${(overallBest.overallAccuracy * 100).toFixed(1)}%`);
+  console.log('📊 Phase 15 baseline (weighted h4096 kg32768): 95.8%');
+
+  // Write entry to research log
+  const logLines: string[] = ['', `## Phase 16 Matrix — ${new Date().toISOString()}`, ''];
+  logLines.push('| Run | Overall | Recall | Update | Verify | Lat |');
+  logLines.push('|-----|---------|--------|--------|--------|-----|');
+  for (const r of results.sort((a, b) => b.overallAccuracy - a.overallAccuracy)) {
+    logLines.push(`| ${r.runLabel} | ${(r.overallAccuracy * 100).toFixed(1)}% | ${(r.recallAccuracy * 100).toFixed(1)}% | ${(r.updateAccuracy * 100).toFixed(1)}% | ${(r.verifyAccuracy * 100).toFixed(1)}% | ${r.avgLatencyMs.toFixed(0)}ms |`);
+  }
+  const { appendFileSync } = await import('fs');
+  appendFileSync('./results/RESEARCH_SUMMARY.md', logLines.join('\n') + '\n');
+  console.log('\n✅ RESEARCH_SUMMARY.md updated with Phase 16 results.');
 }
 
 async function runPhase11(): Promise<void> {
@@ -651,6 +757,9 @@ async function main(): Promise<void> {
       break;
     case 'phase15':
       await runPhase15();
+      break;
+    case 'phase16':
+      await runPhase16();
       break;
     case 'single':
     default:

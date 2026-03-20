@@ -243,4 +243,99 @@ export class MarkdownReporter {
 
     return lines.join('\n');
   }
+
+  /** Write a cross-graph-type × context-size matrix summary for Phase 16. */
+  writeMatrixReport(
+    results: RunResult[],
+    graphTypes: string[],
+    historySizes: number[],
+    kgCtx: number,
+    filename = 'phase16_matrix.md',
+  ): string {
+    const filepath = path.join(this.outputDir, filename);
+    fs.writeFileSync(filepath, this.formatMatrixReport(results, graphTypes, historySizes, kgCtx), 'utf-8');
+    return filepath;
+  }
+
+  private formatMatrixReport(
+    results: RunResult[],
+    graphTypes: string[],
+    historySizes: number[],
+    kgCtx: number,
+  ): string {
+    const lines: string[] = [];
+    const label = (g: string, h: number) => `${g}_phase16_h${h}_kg${kgCtx}`;
+    const get = (g: string, h: number) => results.find(r => r.runLabel === label(g, h));
+    const pct = (v: number | undefined) => v !== undefined ? `${(v * 100).toFixed(1)}%` : 'N/A';
+    const hdr = historySizes.map(h => `h${h}`).join(' | ');
+
+    lines.push('# Phase 16: Graph Type × Context Size Matrix\n');
+    lines.push(`_Generated: ${new Date().toISOString()}_\n`);
+    lines.push('## Configuration\n');
+    lines.push(`- **Graph types**: ${graphTypes.join(', ')}`);
+    lines.push(`- **History context**: ${historySizes.map(h => `${h.toLocaleString()}t`).join(', ')}`);
+    lines.push(`- **KG context**: ${kgCtx.toLocaleString()}t (fixed)`);
+    lines.push('- **Validation**: Phase 15 NLP pipeline (stem → pronoun → embedding → judge)');
+    lines.push('- **Pre-processing**: Phase 15 MessagePreprocessor (entity guard + explicit updates + background guard)');
+    lines.push('- **Model**: qwen3.5:4b @ temp=0\n');
+
+    // Phase 15 baseline callout
+    lines.push('> **Phase 15 baseline (weighted, h4096, kg32768): 95.8% overall** — all comparisons relative to this.\n');
+
+    for (const [metricKey, metricLabel] of [
+      ['overallAccuracy', 'Overall Accuracy'],
+      ['recallAccuracy', 'Recall Accuracy'],
+      ['updateAccuracy', 'Update Accuracy'],
+      ['verifyAccuracy', 'Verify-Update Accuracy'],
+      ['avgLatencyMs', 'Average Latency (ms)'],
+    ] as const) {
+      lines.push(`## ${metricLabel}\n`);
+      const isLatency = metricKey === 'avgLatencyMs';
+      const colHdr = historySizes.map(h => `\`h${h}\``).join(' | ');
+      lines.push(`| Graph Type | ${colHdr} | Best |`);
+      lines.push(`|------------|${historySizes.map(() => '-------').join('|')}|------|`);
+      for (const g of graphTypes) {
+        const vals = historySizes.map(h => get(g, h)?.[metricKey]);
+        const best = vals.filter(v => v !== undefined) as number[];
+        const bestVal = best.length ? (isLatency ? Math.min(...best) : Math.max(...best)) : undefined;
+        const cells = vals.map(v =>
+          v === undefined ? 'N/A' : isLatency ? `${(v as number).toFixed(0)}ms` : pct(v as number)
+        );
+        const bestStr = bestVal !== undefined
+          ? (isLatency ? `${bestVal.toFixed(0)}ms` : pct(bestVal))
+          : 'N/A';
+        lines.push(`| **${g}** | ${cells.join(' | ')} | ${bestStr} |`);
+      }
+      lines.push('');
+    }
+
+    // Per-scenario breakdown: weighted h4096 (Phase 15) vs each graph type at h4096
+    lines.push('## Per-Scenario Accuracy at h4096\n');
+    lines.push('| Scenario | simple | hierarchical | multi | weighted | P15 (weighted) |');
+    lines.push('|----------|--------|--------------|-------|----------|----------------|');
+    const scenarioNames = get(graphTypes[0], 4096)?.scenarioResults.map(s => s.scenarioName) ?? [];
+    for (const scName of scenarioNames) {
+      const cells = graphTypes.map(g => {
+        const r = get(g, 4096);
+        const sc = r?.scenarioResults.find(s => s.scenarioName === scName);
+        return sc ? pct(sc.overallAccuracy) : 'N/A';
+      });
+      // P15 is also weighted h4096 — same result, mark it with asterisk if available
+      const p15 = get('weighted', 4096);
+      const p15sc = p15?.scenarioResults.find(s => s.scenarioName === scName);
+      lines.push(`| ${scName} | ${cells.join(' | ')} | ${p15sc ? pct(p15sc.overallAccuracy) : 'N/A'} |`);
+    }
+    lines.push('');
+
+    // Individual report links
+    lines.push('## Individual Reports\n');
+    const sorted = [...results].sort((a, b) => b.overallAccuracy - a.overallAccuracy);
+    for (const r of sorted) {
+      const delta = (r.overallAccuracy * 100 - 95.8).toFixed(1);
+      const deltaStr = Number(delta) >= 0 ? `+${delta}%` : `${delta}%`;
+      lines.push(`- [\`${r.runLabel}\`](./${r.runLabel}.md): ${pct(r.overallAccuracy)} overall (recall=${pct(r.recallAccuracy)}, update=${pct(r.updateAccuracy)}, verify=${pct(r.verifyAccuracy)}) — _${deltaStr} vs P15_`);
+    }
+
+    return lines.join('\n');
+  }
 }
