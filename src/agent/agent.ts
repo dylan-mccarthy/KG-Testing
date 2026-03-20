@@ -51,6 +51,8 @@ export class KGAgent {
       endpoint: config.ollamaEndpoint,
       model: config.model,
       temperature: config.temperature,
+      numCtx: config.numCtx,
+      timeoutMs: config.timeoutMs,
     });
     this.contextManager = new ContextManager(
       config.maxContextTokens,

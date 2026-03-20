@@ -625,6 +625,8 @@ export const ALL_SCENARIOS: TestScenario[] = [
   mixedUpdates,
 ];
 
+export { engineeringOrgDeepDive } from './large_context';
+
 export function getScenario(id: string): TestScenario | undefined {
   return ALL_SCENARIOS.find(s => s.id === id);
 }

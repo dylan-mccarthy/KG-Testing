@@ -37,7 +37,8 @@ export class RAGAgent {
       endpoint: config.ollamaEndpoint,
       model: config.model,
       temperature: config.temperature,
-      timeoutMs: 120000,
+      numCtx: config.numCtx,
+      timeoutMs: config.timeoutMs,
     });
     this.contextManager = new ContextManager(
       config.maxContextTokens,

@@ -23,6 +23,10 @@ export interface AgentConfig {
   embeddingModel: string;
   /** Max tokens kept in conversation context (forces memory use) */
   maxContextTokens: number;
+  /** Ollama num_ctx — model context window size. Defaults to 4096. Set to match maxContextTokens + headroom. */
+  numCtx?: number;
+  /** HTTP timeout for Ollama requests in ms. Defaults to 120000. Increase for large contexts. */
+  timeoutMs?: number;
   /** Number of memory results injected per turn */
   topK: number;
   /** Temperature for generation */

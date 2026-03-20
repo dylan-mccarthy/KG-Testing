@@ -21,6 +21,8 @@ export interface OllamaClientConfig {
   model: string;
   temperature?: number;
   timeoutMs?: number;
+  /** Ollama num_ctx: how many tokens the model context window processes. Defaults to 4096. */
+  numCtx?: number;
 }
 
 export class OllamaClient {
@@ -30,6 +32,7 @@ export class OllamaClient {
     this.config = {
       temperature: 0.3,
       timeoutMs: 120000,
+      numCtx: 4096,
       ...config,
     };
   }
@@ -37,7 +40,7 @@ export class OllamaClient {
   async chat(messages: ChatMessage[], options?: { temperature?: number; timeoutMs?: number; noThink?: boolean }): Promise<ChatResponse> {
     const ollamaOpts: Record<string, unknown> = {
       temperature: options?.temperature ?? this.config.temperature,
-      num_ctx: 4096,
+      num_ctx: this.config.numCtx,
     };
     const requestBody: Record<string, unknown> = {
       model: this.config.model,

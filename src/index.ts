@@ -13,11 +13,14 @@ import { OllamaClient } from './agent/ollama';
 import { TestRunner } from './harness/runner';
 import { MarkdownReporter } from './harness/reporter';
 import { DEFAULT_AGENT_CONFIG, DEFAULT_GRAPH_CONFIG, RunConfig, buildResearchMatrix, GraphType } from './config';
-import { ALL_SCENARIOS, getScenario } from './scenarios';
+import { ALL_SCENARIOS, getScenario, engineeringOrgDeepDive } from './scenarios';
 
 const OLLAMA_ENDPOINT = 'http://192.168.86.27:11434';
 const MODEL = 'qwen3.5:4b';
 const OUTPUT_DIR = './results';
+
+// Phase 5: half of qwen3.5:4b's 262,144-token context window
+const HALF_MAX_CTX = 131072;
 
 async function checkOllama(): Promise<boolean> {
   const client = new OllamaClient({ endpoint: OLLAMA_ENDPOINT, model: MODEL });
@@ -32,7 +35,7 @@ async function checkOllama(): Promise<boolean> {
 }
 
 function parseArgs(): {
-  mode: 'quick' | 'single' | 'research';
+  mode: 'quick' | 'single' | 'research' | 'phase5';
   graphType?: GraphType;
   contextTokens?: number;
   scenarioId?: string;
@@ -48,6 +51,7 @@ function parseArgs(): {
 
   if (flags['research'] === 'true') return { mode: 'research' };
   if (flags['quick'] === 'true') return { mode: 'quick' };
+  if (flags['phase5'] === 'true') return { mode: 'phase5' };
 
   return {
     mode: 'single',
@@ -101,6 +105,38 @@ async function runSingle(graphType: GraphType, contextTokens: number, scenarioId
 
   // @ts-ignore - filtered above
   const result = await runner.runConfig(config, scenarios);
+  const reportPath = reporter.writeRunReport(result);
+  console.log(`\n📄 Report written: ${reportPath}`);
+  console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
+}
+
+async function runPhase5(): Promise<void> {
+  console.log('\n🧠 PHASE 5: Large-context stress test');
+  console.log(`   Method: weighted KG  |  Context: ${HALF_MAX_CTX.toLocaleString()} tokens (50% of model max)`);
+  console.log(`   Scenario: Engineering Org Deep Dive (48 turns)\n`);
+
+  const runner = new TestRunner(true);
+  const reporter = new MarkdownReporter(OUTPUT_DIR);
+
+  const config: RunConfig = {
+    memoryType: 'weighted',
+    graph: {
+      ...DEFAULT_GRAPH_CONFIG,
+      type: 'weighted',
+      weightedEdges: true,
+    },
+    agent: {
+      ...DEFAULT_AGENT_CONFIG,
+      maxContextTokens: HALF_MAX_CTX,
+      numCtx: HALF_MAX_CTX,
+      timeoutMs: 300000,   // 5 min per turn — large context inference is slow
+    },
+    maxTurns: 60,
+    outputDir: OUTPUT_DIR,
+    runLabel: `weighted_ctx${HALF_MAX_CTX}_phase5`,
+  };
+
+  const result = await runner.runConfig(config, [engineeringOrgDeepDive]);
   const reportPath = reporter.writeRunReport(result);
   console.log(`\n📄 Report written: ${reportPath}`);
   console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
@@ -162,6 +198,9 @@ async function main(): Promise<void> {
       break;
     case 'research':
       await runResearch();
+      break;
+    case 'phase5':
+      await runPhase5();
       break;
     case 'single':
     default:
