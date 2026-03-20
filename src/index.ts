@@ -22,12 +22,12 @@ const OUTPUT_DIR = './results';
 // Phase 5: half of qwen3.5:4b's 262,144-token context window
 const HALF_MAX_CTX = 131072;
 
-async function checkOllama(): Promise<boolean> {
-  const client = new OllamaClient({ endpoint: OLLAMA_ENDPOINT, model: MODEL });
+async function checkOllama(model = MODEL): Promise<boolean> {
+  const client = new OllamaClient({ endpoint: OLLAMA_ENDPOINT, model });
   console.log(`\n🔌 Checking Ollama connection at ${OLLAMA_ENDPOINT}...`);
   const ok = await client.ping();
   if (ok) {
-    console.log(`✅ Ollama connected — model: ${MODEL}`);
+    console.log(`✅ Ollama connected — model: ${model}`);
   } else {
     console.error(`❌ Cannot connect to Ollama at ${OLLAMA_ENDPOINT}`);
   }
@@ -35,10 +35,11 @@ async function checkOllama(): Promise<boolean> {
 }
 
 function parseArgs(): {
-  mode: 'quick' | 'single' | 'research' | 'phase5' | 'phase6' | 'phase7' | 'phase8' | 'phase9' | 'phase10' | 'phase11';
+  mode: 'quick' | 'single' | 'research' | 'phase5' | 'phase6' | 'phase7' | 'phase8' | 'phase9' | 'phase10' | 'phase11' | 'phase12';
   graphType?: GraphType;
   contextTokens?: number;
   scenarioId?: string;
+  model?: string;
 } {
   const args = process.argv.slice(2);
   const flags: Record<string, string> = {};
@@ -58,6 +59,7 @@ function parseArgs(): {
   if (flags['phase9'] === 'true') return { mode: 'phase9' };
   if (flags['phase10'] === 'true') return { mode: 'phase10' };
   if (flags['phase11'] === 'true') return { mode: 'phase11' };
+  if (flags['phase12'] === 'true') return { mode: 'phase12', model: flags['model'] };
 
   return {
     mode: 'single',
@@ -114,6 +116,46 @@ async function runSingle(graphType: GraphType, contextTokens: number, scenarioId
   const reportPath = reporter.writeRunReport(result);
   console.log(`\n📄 Report written: ${reportPath}`);
   console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
+}
+
+async function runPhase12(model = 'qwen3.5:9b'): Promise<void> {
+  const HISTORY_CTX = 4096;
+  const KG_CTX = 32768;
+  const NUM_CTX = 40960;
+  const safeLabel = model.replace(/[^a-z0-9]/gi, '_');
+
+  console.log(`\n🔬 PHASE 12: Model comparison — ${model}`);
+  console.log(`   Config: Phase 10 best (weighted KG, split-budget, KG-over-history prompt)`);
+  console.log(`   Comparing against Phase 10 baseline: qwen3.5:4b — 90.1% overall`);
+  console.log(`   History: ${HISTORY_CTX.toLocaleString()}t  |  KG: ${KG_CTX.toLocaleString()}t  |  num_ctx: ${NUM_CTX.toLocaleString()}t\n`);
+
+  const runner = new TestRunner(true);
+  const reporter = new MarkdownReporter(OUTPUT_DIR);
+
+  const config: RunConfig = {
+    memoryType: 'weighted',
+    graph: { ...DEFAULT_GRAPH_CONFIG, type: 'weighted', weightedEdges: true },
+    agent: {
+      ...DEFAULT_AGENT_CONFIG,
+      model,
+      maxContextTokens: HISTORY_CTX,
+      maxKgTokens: KG_CTX,
+      numCtx: NUM_CTX,
+      timeoutMs: 180000, // 9b model is slower — allow 3 min per turn
+    },
+    maxTurns: 60,
+    outputDir: OUTPUT_DIR,
+    runLabel: `weighted_phase12_${safeLabel}_h${HISTORY_CTX}_kg${KG_CTX}`,
+  };
+
+  const allScenarios = [...ALL_SCENARIOS, engineeringOrgDeepDive];
+  const result = await runner.runConfig(config, allScenarios);
+  const reportPath = reporter.writeRunReport(result);
+  console.log(`\n📄 Report written: ${reportPath}`);
+  console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
+  console.log(`\n📊 Phase 10 baseline (qwen3.5:4b): 90.1%`);
+  const delta = (result.overallAccuracy * 100 - 90.1).toFixed(1);
+  console.log(`📊 Delta vs baseline: ${Number(delta) >= 0 ? '+' : ''}${delta}%`);
 }
 
 async function runPhase11(): Promise<void> {
@@ -406,13 +448,12 @@ async function main(): Promise<void> {
   console.log('  KG-Testing: Knowledge Graph Memory Harness  ');
   console.log('═══════════════════════════════════════════════');
 
-  const ok = await checkOllama();
+  const { mode, graphType, contextTokens, scenarioId, model } = parseArgs();
+  const ok = await checkOllama(model || MODEL);
   if (!ok) {
     console.error('\nAborting: Ollama not reachable.');
     process.exit(1);
   }
-
-  const { mode, graphType, contextTokens, scenarioId } = parseArgs();
 
   switch (mode) {
     case 'quick':
@@ -441,6 +482,9 @@ async function main(): Promise<void> {
       break;
     case 'phase11':
       await runPhase11();
+      break;
+    case 'phase12':
+      await runPhase12(model || 'qwen3.5:9b');
       break;
     case 'single':
     default:

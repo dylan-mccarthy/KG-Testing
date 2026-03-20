@@ -159,3 +159,45 @@ WeightedGraph wins — edge weights encode relationship confidence, boosting fre
 | `src/harness/runner.ts` | TestRunner: turn execution, pass/fail evaluation |
 | `src/harness/reporter.ts` | MarkdownReporter: per-run + leaderboard reports |
 | `results/` | All per-run markdown reports |
+
+---
+
+## Phase 12: Model Comparison — qwen3.5:9b vs qwen3.5:4b
+
+Running the Phase 10 best configuration (split-budget, staleness metadata, KG-over-history prompt)
+with qwen3.5:9b to test whether a larger model improves results.
+
+| Metric | qwen3.5:4b (Phase 10) | qwen3.5:9b (Phase 12) | Delta |
+|--------|----------------------|----------------------|-------|
+| Overall | **90.1%** | 85.8% | -4.3% |
+| Recall | **80.9%** | 76.1% | -4.8% |
+| Update | 100% | 100% | 0% |
+| Verify | **91.7%** | 79.2% | -12.5% |
+| Deep-dive verify | **50%** (2/4) | 25% (1/4) | -25% |
+| Deep-dive recall | **45%** | 36% | -9% |
+| Avg latency/turn | **3,053ms** | 5,499ms | +1.8× |
+
+### Finding: Larger model performs WORSE on this task
+
+**qwen3.5:4b outperforms qwen3.5:9b** by 4.3% overall despite being smaller and faster.
+
+Root cause analysis:
+1. **Deep recall degradation**: 9b misses facts stored 30+ turns ago (postgres/react at turn 39,
+   headcount/saas at turn 40) where 4b succeeded — likely the 9b model is more conservative
+   about asserting facts not prominently surfaced in its attention window.
+2. **Frontend Lead verify (turn 44)**: 9b answers "Omar was the Frontend Lead, Lena replaced him"
+   (includes both names + old role) despite the KG-over-history instruction; 4b answers cleanly.
+3. **Budget narrative (turn 45)**: 9b still provides "$400k→$550k" historical narrative; both
+   models share this weakness but 9b does it more consistently.
+4. **Update accuracy 100%**: Both models correctly process mutations — the KG handles this, not the model.
+
+### Interpretation
+The KG-optimised prompts (canonical attribution, KG-over-history, freshness annotations) are
+tuned for the concise, instruction-following behaviour of qwen3.5:4b. The 9b model is more
+verbose and tends to give historical context even when instructed not to, and is more conservative
+about asserting recalled facts. The 4b model's shorter, more directive responses align better with
+the forbidden-keyword evaluation approach.
+
+**Conclusion**: For this memory recall + mutation testing task, **qwen3.5:4b is the better choice**
+— faster (1.8× lower latency), more accurate (4.3% higher), and more compliant with KG-priority
+instructions.
