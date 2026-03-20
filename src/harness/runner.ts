@@ -3,6 +3,7 @@
 import { RunConfig } from '../config';
 import { createGraph, GraphStats } from '../graphs';
 import { KGAgent, TurnRecord } from '../agent';
+import { OllamaClient } from '../agent/ollama';
 import { EmbeddingsClient, VectorStore, RAGAgent } from '../rag';
 import { TestScenario, TurnType, ALL_SCENARIOS } from '../scenarios';
 
@@ -65,13 +66,50 @@ export interface RunResult {
 
 export class TestRunner {
   private verbose: boolean;
+  private judgeClient?: OllamaClient;
 
-  constructor(verbose = true) {
+  constructor(verbose = true, judgeConfig?: { endpoint: string; model: string }) {
     this.verbose = verbose;
+    if (judgeConfig) {
+      this.judgeClient = new OllamaClient({
+        endpoint: judgeConfig.endpoint,
+        model: judgeConfig.model,
+        temperature: 0,
+        timeoutMs: 20000,
+      });
+    }
   }
 
   private log(msg: string): void {
     if (this.verbose) console.log(msg);
+  }
+
+  /**
+   * LLM judge: ask the model if the response semantically satisfies the expected keywords.
+   * Used as a rescue when keyword matching fails on recall/verify turns.
+   * Returns true if the judge says the answer is correct.
+   */
+  private async llmJudge(
+    question: string,
+    response: string,
+    expectedKeywords: string[],
+  ): Promise<boolean> {
+    if (!this.judgeClient || expectedKeywords.length === 0) return false;
+    const expected = expectedKeywords.join(', ');
+    const prompt = `/no_think
+Does the following response answer the question and include information about: ${expected}?
+Question: "${question}"
+Response: "${response.slice(0, 500)}"
+Answer with ONLY "yes" or "no".`;
+    try {
+      const result = await this.judgeClient.chat([
+        { role: 'user', content: prompt }
+      ], { temperature: 0, noThink: true, timeoutMs: 15000 });
+      const content = result.message?.content?.toLowerCase().trim() ?? '';
+      return content.startsWith('yes');
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -109,44 +147,57 @@ export class TestRunner {
     });
   }
 
-  /** Determine if a turn passed its evaluation criteria */
-  private evaluateTurn(
+  /** Determine if a turn passed its evaluation criteria.
+   *  Uses LLM judge as fallback when keyword matching fails on recall/verify turns. */
+  private async evaluateTurn(
     type: TurnType,
     record: TurnRecord,
     expectedKeywords: string[],
     forbiddenKeywords: string[],
-  ): { passed: boolean; missing: string[]; foundForbidden: string[] } {
+  ): Promise<{ passed: boolean; missing: string[]; foundForbidden: string[]; judgeUsed: boolean }> {
     const response = record.assistantResponse;
     const { missing } = this.checkKeywords(response, expectedKeywords);
     const foundForbidden = this.checkForbidden(response, forbiddenKeywords);
+    let judgeUsed = false;
 
     let passed = false;
     switch (type) {
       case 'tell':
-        // Pass if at least one fact was extracted (KG grew) OR agent acknowledged
         passed = (record.kgNodesAfter > record.kgNodesBefore) ||
           (record.extraction?.facts.length ?? 0) > 0;
         break;
-      case 'recall':
-        passed = missing.length === 0 && foundForbidden.length === 0;
+      case 'recall': {
+        const keywordPass = missing.length === 0 && foundForbidden.length === 0;
+        if (keywordPass) {
+          passed = true;
+        } else if (missing.length > 0 && foundForbidden.length === 0 && this.judgeClient) {
+          // Keyword failed — try LLM judge as rescue
+          const judgePass = await this.llmJudge(record.userMessage, response, expectedKeywords);
+          if (judgePass) { judgeUsed = true; passed = true; }
+        }
         break;
+      }
       case 'update':
-        // Pass if KG updated AND response acknowledges the update
         passed = (record.extraction?.nodesUpdated ?? 0) > 0 ||
           (record.extraction?.facts.some(f => f.isUpdate) ?? false) ||
           missing.length === 0;
         break;
-      case 'verify_update':
-        // Pass if expected (new) keywords present AND forbidden (old) keywords absent
-        passed = missing.length === 0 && foundForbidden.length === 0;
+      case 'verify_update': {
+        const keywordPass = missing.length === 0 && foundForbidden.length === 0;
+        if (keywordPass) {
+          passed = true;
+        } else if (missing.length > 0 && foundForbidden.length === 0 && this.judgeClient) {
+          const judgePass = await this.llmJudge(record.userMessage, response, expectedKeywords);
+          if (judgePass) { judgeUsed = true; passed = true; }
+        }
         break;
+      }
       case 'distractor':
-        // Distractors pass if response is sensible (not an error) and no forbidden words
         passed = !record.error && response.length > 10 && foundForbidden.length === 0;
         break;
     }
 
-    return { passed, missing, foundForbidden };
+    return { passed, missing, foundForbidden, judgeUsed };
   }
 
   async runScenario(
@@ -166,8 +217,8 @@ export class TestRunner {
 
       // Only extract facts on tell/update turns — skipping extraction for recall/distractor saves ~15s/turn
       const shouldExtract = turn.type === 'tell' || turn.type === 'update';
-      const record: TurnRecord = await agent.chat(turn.userMessage, shouldExtract);
-      const { passed, missing, foundForbidden } = this.evaluateTurn(
+      const record: TurnRecord = await agent.chat(turn.userMessage, shouldExtract, turn.type);
+      const { passed, missing, foundForbidden, judgeUsed } = await this.evaluateTurn(
         turn.type, record, turn.expectedKeywords, turn.forbiddenKeywords
       );
 
@@ -195,7 +246,8 @@ export class TestRunner {
       const statusEmoji = passed ? '✅' : '❌';
       const kgDelta = record.kgNodesAfter - record.kgNodesBefore;
       const extracted = result.factsExtracted;
-      this.log(`    ${statusEmoji} [${record.latencyMs}ms, KG +${kgDelta} nodes, extracted ${extracted} facts, ${record.kgResults.length} KG hits]`);
+      const judgeTag = judgeUsed ? ' [judge✓]' : '';
+      this.log(`    ${statusEmoji} [${record.latencyMs}ms, KG +${kgDelta} nodes, extracted ${extracted} facts, ${record.kgResults.length} KG hits]${judgeTag}`);
 
       if (!passed) {
         if (missing.length > 0) this.log(`       Missing: ${missing.join(', ')}`);

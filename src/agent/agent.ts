@@ -5,6 +5,20 @@ import { ContextManager } from './context';
 import { FactExtractor, ExtractionResult } from './extractor';
 import { IKnowledgeGraph, NodeData } from '../graphs';
 import { AgentConfig } from '../config';
+import { EmbeddingsClient } from '../rag';
+
+/** Cosine similarity between two equal-length vectors */
+function cosineSimilarity(a: number[], b: number[]): number {
+  if (a.length !== b.length || a.length === 0) return 0;
+  let dot = 0, normA = 0, normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  const denom = Math.sqrt(normA) * Math.sqrt(normB);
+  return denom === 0 ? 0 : dot / denom;
+}
 
 export interface TurnRecord {
   turn: number;
@@ -45,6 +59,9 @@ export class KGAgent {
   private config: AgentConfig;
   private history: ChatMessage[] = [];
   private session: AgentSession;
+  /** Per-node embedding cache: nodeId → embedding vector */
+  private nodeEmbeddings: Map<string, number[]> = new Map();
+  private embeddingsClient?: EmbeddingsClient;
 
   constructor(graph: IKnowledgeGraph, config: AgentConfig, sessionId: string) {
     this.graph = graph;
@@ -62,6 +79,13 @@ export class KGAgent {
       config.maxKgTokens,
     );
     this.extractor = new FactExtractor(this.client);
+    // Initialise embeddings client if model is configured (enables hybrid retrieval)
+    if (config.embeddingModel) {
+      this.embeddingsClient = new EmbeddingsClient({
+        endpoint: config.ollamaEndpoint,
+        model: config.embeddingModel,
+      });
+    }
     this.session = {
       sessionId,
       graphType: graph.name,
@@ -87,16 +111,21 @@ export class KGAgent {
     return words.join(' ');
   }
 
-  /** Query the KG and format results as a memory injection string */
-  private queryKG(userMessage: string): { nodes: NodeData[]; memoryText: string } {
+  /** Query the KG and format results as a memory injection string.
+   *  turnType is used to set dynamic topK: recall/verify turns get more results. */
+  private async queryKG(userMessage: string, turnType?: string): Promise<{ nodes: NodeData[]; memoryText: string; suppressionText: string }> {
     const queryTerms = this.extractQueryTerms(userMessage);
-    if (!queryTerms) return { nodes: [], memoryText: '' };
+    if (!queryTerms) return { nodes: [], memoryText: '', suppressionText: '' };
 
-    // In split-budget mode, retrieve all nodes — token truncation caps the output.
-    // In shared-pool mode, respect topK to avoid bloating the shared budget.
-    const effectiveTopK = this.config.maxKgTokens
+    // Dynamic topK by turn type — recall/verify turns need more candidates
+    const typeMultiplier: Record<string, number> = {
+      recall: 3, verify_update: 3, update: 1.5, tell: 1, distractor: 0.5,
+    };
+    const multiplier = typeMultiplier[turnType ?? 'recall'] ?? 2;
+    const baseTopK = this.config.maxKgTokens
       ? Math.max(this.config.topK * 10, this.graph.getStats().nodeCount)
       : this.config.topK;
+    const effectiveTopK = Math.ceil(baseTopK * multiplier);
 
     // Search by label match
     const labelResults = this.graph.searchByLabel(queryTerms, effectiveTopK);
@@ -105,28 +134,48 @@ export class KGAgent {
     const tags = queryTerms.split(' ').filter(t => t.length > 3);
     const tagResults = tags.length > 0 ? this.graph.searchByTags(tags, effectiveTopK) : [];
 
-    // Merge and deduplicate by node id
+    // Merge and deduplicate by node id, computing tag score for each
     const seen = new Set<string>();
-    const allNodes: NodeData[] = [];
+    const scoredMap = new Map<string, { node: NodeData; tagScore: number }>();
     for (const r of [...labelResults, ...tagResults]) {
       if (!seen.has(r.node.id)) {
         seen.add(r.node.id);
-        allNodes.push(r.node);
+        scoredMap.set(r.node.id, { node: r.node, tagScore: r.score });
         // Also get neighbors for context
         const neighbors = this.graph.getNeighbors(r.node.id);
         for (const n of neighbors.slice(0, 2)) {
           if (!seen.has(n.id)) {
             seen.add(n.id);
-            allNodes.push(n);
+            scoredMap.set(n.id, { node: n, tagScore: 0 });
           }
         }
       }
     }
 
-    const topNodes = allNodes
-      .filter(n => !n.isOutdated)   // exclude superseded facts
-      .slice(0, effectiveTopK * 2);
-    if (topNodes.length === 0) return { nodes: [], memoryText: '' };
+    // Hybrid scoring: blend tag score (0.6) with embedding cosine similarity (0.4)
+    if (this.embeddingsClient && scoredMap.size > 0) {
+      try {
+        const queryEmbedding = await this.embeddingsClient.embed(userMessage);
+        for (const [nodeId, entry] of scoredMap) {
+          const nodeEmb = this.nodeEmbeddings.get(nodeId);
+          if (nodeEmb && nodeEmb.length > 0) {
+            const cosScore = cosineSimilarity(queryEmbedding, nodeEmb);
+            // Blend: tag score range ~0-15, cosine range 0-1 → scale cosine to match
+            entry.tagScore = 0.6 * entry.tagScore + 0.4 * cosScore * 15;
+          }
+        }
+      } catch {
+        // Embedding failure is non-fatal — fall back to tag-only scoring
+      }
+    }
+
+    const topNodes = Array.from(scoredMap.values())
+      .filter(e => !e.node.isOutdated)  // exclude superseded facts
+      .sort((a, b) => b.tagScore - a.tagScore)
+      .slice(0, effectiveTopK * 2)
+      .map(e => e.node);
+
+    if (topNodes.length === 0) return { nodes: [], memoryText: '', suppressionText: '' };
 
     const now = Date.now();
     const timeAgo = (ms: number): string => {
@@ -141,8 +190,6 @@ export class KGAgent {
       const propStr = Object.entries(node.properties)
         .map(([k, v]) => `${k}: ${v}`)
         .join(', ');
-      // Freshness annotation: show version + age for updated nodes so the model
-      // can reason about which facts are most current.
       const freshness = node.version > 1 ? ` [v${node.version}, updated ${timeAgo(node.updatedAt)}]` : '';
       const line = propStr
         ? `- ${node.label}: ${propStr}${freshness}`
@@ -163,10 +210,26 @@ export class KGAgent {
       }
     }
 
-    return { nodes: topNodes, memoryText: lines.join('\n') };
+    // Build suppression warnings for outdated nodes — explicitly tell the model
+    // NOT to cite old values even if they appear in conversation history.
+    const suppressionLines: string[] = [];
+    const allOutdated = this.graph.getAllNodes().filter(n => n.isOutdated);
+    for (const node of allOutdated) {
+      const entries = Object.entries(node.properties);
+      if (entries.length === 0) continue;
+      for (const [attr, val] of entries.slice(0, 2)) {
+        suppressionLines.push(`⚠️ OUTDATED — do NOT state: "${node.label}" has ${attr} "${val}"`);
+      }
+    }
+
+    return {
+      nodes: topNodes,
+      memoryText: lines.join('\n'),
+      suppressionText: suppressionLines.join('\n'),
+    };
   }
 
-  async chat(userMessage: string, extractFacts = true): Promise<TurnRecord> {
+  async chat(userMessage: string, extractFacts = true, turnType?: string): Promise<TurnRecord> {
     const turnStart = Date.now();
     const turnNum = this.session.turns.length + 1;
     const kgNodesBefore = this.graph.getStats().nodeCount;
@@ -195,25 +258,44 @@ export class KGAgent {
         if (facts.length > 0) {
           const extraction = this.extractor.storeInGraph(facts, this.graph);
           record.extraction = extraction;
+
+          // Cache embeddings for affected nodes (hybrid retrieval)
+          if (this.embeddingsClient && extraction.affectedNodeIds.length > 0) {
+            for (const nodeId of extraction.affectedNodeIds) {
+              const node = this.graph.getNode(nodeId);
+              if (node) {
+                try {
+                  const text = `${node.label} ${Object.entries(node.properties).map(([k,v]) => `${k} ${v}`).join(' ')} ${node.tags.join(' ')}`;
+                  const emb = await this.embeddingsClient.embed(text);
+                  this.nodeEmbeddings.set(nodeId, emb);
+                } catch { /* non-fatal */ }
+              }
+            }
+          }
         }
       }
 
       record.kgNodesAfter = this.graph.getStats().nodeCount;
 
-      // Step 2: Query KG for relevant memory
+      // Step 2: Query KG for relevant memory (async for hybrid embedding scoring)
       const queryTerms = this.extractQueryTerms(userMessage);
       record.kgQuery = queryTerms;
-      const { nodes, memoryText } = this.queryKG(userMessage);
+      const { nodes, memoryText, suppressionText } = await this.queryKG(userMessage, turnType);
       record.kgResults = nodes;
       record.kgMemoryInjected = memoryText;
 
+      // Combine KG facts with suppression warnings
+      const fullKgText = suppressionText
+        ? `${memoryText}\n\n## Outdated — do NOT cite these values\n${suppressionText}`
+        : memoryText;
+
       // Count dropped messages before building context
       record.messagesDropped = this.contextManager.countDropped(
-        this.history, memoryText, userMessage
+        this.history, fullKgText, userMessage
       );
 
       // Build context with KG injection
-      const ctx = this.contextManager.buildContext(this.history, memoryText, userMessage);
+      const ctx = this.contextManager.buildContext(this.history, fullKgText, userMessage);
       record.contextTokensUsed = ctx.totalTokens;
       this.session.totalTokensUsed += ctx.totalTokens;
 

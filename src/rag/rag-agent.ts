@@ -104,7 +104,7 @@ export class RAGAgent {
     return { chunksAdded, chunksUpdated };
   }
 
-  async chat(userMessage: string, extractFacts = true): Promise<TurnRecord> {
+  async chat(userMessage: string, extractFacts = true, _turnType?: string): Promise<TurnRecord> {
     const turnStart = Date.now();
     const turnNum = this.session.turns.length + 1;
     const statsBefore = this.store.getStats();
@@ -145,6 +145,7 @@ export class RAGAgent {
           nodesUpdated: chunksUpdated,
           edgesCreated: 0,
           rawResponse: '',
+          affectedNodeIds: [],
         };
       }
 

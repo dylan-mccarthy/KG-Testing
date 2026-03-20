@@ -19,6 +19,8 @@ export interface ExtractionResult {
   nodesUpdated: number;
   edgesCreated: number;
   rawResponse: string;
+  /** IDs of nodes created or updated — used for embedding cache invalidation */
+  affectedNodeIds: string[];
 }
 
 const EXTRACTION_SYSTEM = `/no_think
@@ -34,13 +36,25 @@ Return ONLY a valid JSON array with no explanation. Each element:
   * language proficiency level → "level"
   * team size / headcount → "team_size"
   * reporting manager → "reports_to"
+  * specialisation / expertise / domain focus → "specialization"
+  * engineering ladder level (L4/L5/L6/senior/staff) → "eng_level"
+  * years teaching/working/doing something → "tenure"
+  * number of direct reports or engineers managed → "direct_reports"
+  * cloud platform / infrastructure provider → "cloud_platform"
   * (for anything else use a short lowercase snake_case descriptor)
 - "value": the value (e.g. "engineer", "34", "Austin")
 - "relatedEntity": (optional) for relationships, the other entity name
 - "relation": (optional) edge type if relatedEntity present
 - "isUpdate": true if the user says something changed, is new/current, or was updated
 
-Return [] if no concrete facts are shared (e.g. questions, general chat).
+CRITICAL: If a statement describes MULTIPLE people, create SEPARATE fact objects for EACH person.
+CRITICAL: If a fact mentions a person's name as a VALUE (not the subject entity), ALSO create a
+separate fact for that named person. Example: "Maya is the L6 distributed systems lead on Atlas" →
+  [{entity:"Atlas", attribute:"lead", value:"Maya"},
+   {entity:"Maya", attribute:"eng_level", value:"L6"},
+   {entity:"Maya", attribute:"specialization", value:"distributed systems"}]
+
+Return [] if no concrete facts are shared (e.g. pure questions, general chat, greetings with no info).
 Return ONLY the JSON array. Nothing else.`;
 
 // Maps LLM-generated attribute variants to a single canonical key.
@@ -71,6 +85,18 @@ const CANONICAL_ATTRS: Record<string, string> = {
   spanish_level: 'level', language_level: 'level',
   // Tenure
   years_at_company: 'tenure', time_at_company: 'tenure', joined: 'tenure',
+  // Engineering level
+  ladder_level: 'eng_level', engineering_level: 'eng_level', seniority: 'eng_level',
+  level: 'eng_level', rank: 'eng_level',
+  // Specialization / expertise
+  specialisation: 'specialization', expertise: 'specialization', domain: 'specialization',
+  focus: 'specialization', technical_area: 'specialization', skill: 'specialization',
+  // Direct reports / team management
+  manages: 'direct_reports', reports: 'direct_reports', headcount: 'direct_reports',
+  team_headcount: 'direct_reports', engineers: 'direct_reports',
+  // Cloud platform
+  cloud: 'cloud_platform', infrastructure: 'cloud_platform', platform: 'cloud_platform',
+  cloud_provider: 'cloud_platform', hosting: 'cloud_platform',
 };
 
 function canonicalizeAttr(attr: string): string {
@@ -122,6 +148,41 @@ function buildTags(entity: string, attribute: string, value: string): string[] {
   return [...tags];
 }
 
+/** Regex-based fallback extraction for simple intro/greeting messages that the LLM skips */
+function regexExtract(message: string): ExtractedFact[] {
+  const facts: ExtractedFact[] = [];
+
+  // Name: "My name is X Y", "I'm X Y", "I am X Y"
+  const nameMatch = message.match(
+    /(?:my name is|i'?m|i am)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i
+  );
+  const name = nameMatch?.[1];
+  if (name) {
+    facts.push({ entity: name, attribute: 'name', value: name, isUpdate: false });
+  }
+
+  // Age: "I'm 29 years old"
+  const ageMatch = message.match(/i'?m\s+(\d{1,3})\s+years?\s+old/i);
+  if (ageMatch && name) {
+    facts.push({ entity: name, attribute: 'age', value: ageMatch[1], isUpdate: false });
+  }
+
+  // Pet: "I have a [breed] named X"
+  const petMatch = message.match(/i\s+have\s+a\s+([\w\s]+?)\s+named\s+([A-Z][a-z]+)/i);
+  if (petMatch && name) {
+    facts.push({ entity: name, attribute: 'pet', value: `${petMatch[1]} named ${petMatch[2]}`, isUpdate: false });
+    facts.push({ entity: petMatch[2], attribute: 'species', value: petMatch[1], isUpdate: false });
+  }
+
+  // Company: "I work at X" / "I work for X"
+  const companyMatch = message.match(/i\s+work\s+(?:at|for)\s+([A-Z][A-Za-z\s]+?)(?:\s+as|\.|,|$)/);
+  if (companyMatch && name) {
+    facts.push({ entity: name, attribute: 'company', value: companyMatch[1].trim(), isUpdate: false });
+  }
+
+  return facts;
+}
+
 export class FactExtractor {
   private client: OllamaClient;
 
@@ -142,13 +203,17 @@ export class FactExtractor {
 
       const text = response.message?.content?.trim() || '[]';
       const jsonMatch = text.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) return [];
+      if (!jsonMatch) return regexExtract(userMessage);
 
       const parsed = JSON.parse(jsonMatch[0]) as ExtractedFact[];
-      if (!Array.isArray(parsed)) return [];
-      return parsed.filter(f => f.entity && f.attribute && f.value);
+      if (!Array.isArray(parsed)) return regexExtract(userMessage);
+      const llmFacts = parsed.filter(f => f.entity && f.attribute && f.value);
+
+      // If LLM returned nothing, try regex fallback for greeting/intro messages
+      if (llmFacts.length === 0) return regexExtract(userMessage);
+      return llmFacts;
     } catch {
-      return [];
+      return regexExtract(userMessage);
     }
   }
 
@@ -157,6 +222,7 @@ export class FactExtractor {
     let nodesCreated = 0;
     let nodesUpdated = 0;
     let edgesCreated = 0;
+    const affectedNodeIds: string[] = [];
 
     for (const fact of facts) {
       // Normalise attribute name to canonical key before storage
@@ -182,6 +248,10 @@ export class FactExtractor {
         nodesCreated++;
       }
 
+      if (!affectedNodeIds.includes(entityNode.id)) {
+        affectedNodeIds.push(entityNode.id);
+      }
+
       // Conflict detection: if this fact assigns a unique role/title to an entity,
       // mark any OTHER node that holds the same role value as outdated.
       this.markConflictingNodes(normFact, entityNode, graph);
@@ -201,6 +271,10 @@ export class FactExtractor {
           nodesCreated++;
         }
 
+        if (!affectedNodeIds.includes(relatedNode.id)) {
+          affectedNodeIds.push(relatedNode.id);
+        }
+
         // Add edge if it doesn't already exist
         try {
           graph.addEdge(entityNode.id, relatedNode.id, normFact.relation);
@@ -217,6 +291,7 @@ export class FactExtractor {
       nodesUpdated,
       edgesCreated,
       rawResponse: JSON.stringify(facts),
+      affectedNodeIds,
     };
   }
 
