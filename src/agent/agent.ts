@@ -121,17 +121,30 @@ export class KGAgent {
       }
     }
 
-    const topNodes = allNodes.slice(0, effectiveTopK * 2);
+    const topNodes = allNodes
+      .filter(n => !n.isOutdated)   // exclude superseded facts
+      .slice(0, effectiveTopK * 2);
     if (topNodes.length === 0) return { nodes: [], memoryText: '' };
+
+    const now = Date.now();
+    const timeAgo = (ms: number): string => {
+      const diff = now - ms;
+      if (diff < 60_000) return 'just now';
+      if (diff < 3_600_000) return `${Math.round(diff / 60_000)}m ago`;
+      return `${Math.round(diff / 3_600_000)}h ago`;
+    };
 
     const lines: string[] = [];
     for (const node of topNodes) {
       const propStr = Object.entries(node.properties)
         .map(([k, v]) => `${k}: ${v}`)
         .join(', ');
+      // Freshness annotation: show version + age for updated nodes so the model
+      // can reason about which facts are most current.
+      const freshness = node.version > 1 ? ` [v${node.version}, updated ${timeAgo(node.updatedAt)}]` : '';
       const line = propStr
-        ? `- ${node.label}: ${propStr}`
-        : `- ${node.label}`;
+        ? `- ${node.label}: ${propStr}${freshness}`
+        : `- ${node.label}${freshness}`;
       lines.push(line);
 
       // Add edge relationships

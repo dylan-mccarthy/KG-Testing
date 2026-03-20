@@ -34,6 +34,34 @@ Return ONLY a valid JSON array with no explanation. Each element:
 Return [] if no concrete facts are shared (e.g. questions, general chat).
 Return ONLY the JSON array. Nothing else.`;
 
+// Maps LLM-generated attribute variants to a single canonical key.
+// This prevents the same logical fact being stored under two different keys
+// (e.g. "current_location" vs "location") so updateNode() can reliably
+// overwrite the old value and clean up stale tags.
+const CANONICAL_ATTRS: Record<string, string> = {
+  // Location
+  city: 'location', current_location: 'location', lives_in: 'location',
+  based_in: 'location', relocated_to: 'location', home: 'location',
+  // Role / title
+  title: 'role', position: 'role', job_title: 'role', current_role: 'role',
+  new_role: 'role', promoted_to: 'role', designation: 'role',
+  // Project / assignment
+  current_project: 'project', assigned_to: 'project', working_on: 'project',
+  supporting: 'project', assigned_project: 'project', team_assignment: 'project',
+  // Budget
+  current_budget: 'budget', approved_budget: 'budget', total_budget: 'budget',
+  new_budget: 'budget', updated_budget: 'budget', revised_budget: 'budget',
+  // Employment
+  employer: 'company', works_at: 'company', employed_by: 'company',
+  // Language proficiency
+  proficiency: 'level', fluency: 'level', skill_level: 'level',
+};
+
+function canonicalizeAttr(attr: string): string {
+  const normalised = attr.toLowerCase().replace(/[\s\-]/g, '_');
+  return CANONICAL_ATTRS[normalised] ?? normalised;
+}
+
 // Semantic aliases: maps stored attribute names to query terms users might use
 const ATTR_ALIASES: Record<string, string[]> = {
   location: ['city', 'where', 'live', 'located', 'place', 'home', 'reside', 'based'],
@@ -115,44 +143,51 @@ export class FactExtractor {
     let edgesCreated = 0;
 
     for (const fact of facts) {
+      // Normalise attribute name to canonical key before storage
+      const normFact = { ...fact, attribute: canonicalizeAttr(fact.attribute) };
+
       // Find existing node for this entity
-      const existing = graph.searchByLabel(fact.entity, 3);
+      const existing = graph.searchByLabel(normFact.entity, 3);
       let entityNode: NodeData;
 
-      if (existing.length > 0 && this.isSameEntity(existing[0].node.label, fact.entity)) {
+      if (existing.length > 0 && this.isSameEntity(existing[0].node.label, normFact.entity)) {
         entityNode = existing[0].node;
         // Merge the property and enrich tags
         graph.updateNode(entityNode.id, {
-          properties: { [fact.attribute]: fact.value },
-          tags: buildTags(fact.entity, fact.attribute, fact.value),
+          properties: { [normFact.attribute]: normFact.value },
+          tags: buildTags(normFact.entity, normFact.attribute, normFact.value),
         });
         nodesUpdated++;
       } else {
         // Create new node for this entity
-        entityNode = graph.addNode(fact.entity, {
-          [fact.attribute]: fact.value,
-        }, buildTags(fact.entity, fact.attribute, fact.value));
+        entityNode = graph.addNode(normFact.entity, {
+          [normFact.attribute]: normFact.value,
+        }, buildTags(normFact.entity, normFact.attribute, normFact.value));
         nodesCreated++;
       }
 
+      // Conflict detection: if this fact assigns a unique role/title to an entity,
+      // mark any OTHER node that holds the same role value as outdated.
+      this.markConflictingNodes(normFact, entityNode, graph);
+
       // Handle relational facts
-      if (fact.relatedEntity && fact.relation) {
-        const relatedExisting = graph.searchByLabel(fact.relatedEntity, 3);
+      if (normFact.relatedEntity && normFact.relation) {
+        const relatedExisting = graph.searchByLabel(normFact.relatedEntity, 3);
         let relatedNode: NodeData;
 
-        if (relatedExisting.length > 0 && this.isSameEntity(relatedExisting[0].node.label, fact.relatedEntity)) {
+        if (relatedExisting.length > 0 && this.isSameEntity(relatedExisting[0].node.label, normFact.relatedEntity)) {
           relatedNode = relatedExisting[0].node;
         } else {
-          relatedNode = graph.addNode(fact.relatedEntity, {}, [
-            fact.relatedEntity.toLowerCase(),
-            ...fact.relatedEntity.toLowerCase().split(/\s+/),
+          relatedNode = graph.addNode(normFact.relatedEntity, {}, [
+            normFact.relatedEntity.toLowerCase(),
+            ...normFact.relatedEntity.toLowerCase().split(/\s+/),
           ]);
           nodesCreated++;
         }
 
         // Add edge if it doesn't already exist
         try {
-          graph.addEdge(entityNode.id, relatedNode.id, fact.relation);
+          graph.addEdge(entityNode.id, relatedNode.id, normFact.relation);
           edgesCreated++;
         } catch {
           // Edge may already exist or nodes invalid
@@ -167,6 +202,51 @@ export class FactExtractor {
       edgesCreated,
       rawResponse: JSON.stringify(facts),
     };
+  }
+
+  /**
+   * When a new fact assigns a role/title/lead/position value to an entity, scan ALL
+   * other (non-outdated) nodes for the same value in any property field.
+   * If found on a different entity, mark that node as outdated (superseded).
+   *
+   * Two detection modes:
+   *  1. VALUE-based: fact.value is a role title (e.g. "Frontend Lead") →
+   *     find any node whose property VALUE equals that title → mark outdated.
+   *  2. ATTR-based: fact.attribute is a role-like key (e.g. "role", "lead") →
+   *     find any OTHER node that has the same attribute key → mark outdated.
+   *     This catches cases where the extractor stores the fact as
+   *     {entity: "Alex", attribute: "frontend_lead", value: "Lena"} rather than
+   *     {entity: "Lena", attribute: "role", value: "Frontend Lead"}.
+   */
+  private markConflictingNodes(fact: ExtractedFact, entityNode: NodeData, graph: IKnowledgeGraph): void {
+    const val = String(fact.value).toLowerCase().trim();
+    const attr = String(fact.attribute).toLowerCase().trim();
+    if (val.length < 5) return;
+
+    const roleHints = ['lead', 'manager', 'director', 'head', 'chief', 'vp', 'cto', 'ceo', 'coo',
+      'officer', 'engineer', 'developer', 'analyst', 'architect', 'owner'];
+    const isRoleValue = roleHints.some(h => val.includes(h));
+    const isRoleAttr  = roleHints.some(h => attr.includes(h));
+
+    if (!isRoleValue && !isRoleAttr) return;
+
+    for (const node of graph.getAllNodes()) {
+      if (node.id === entityNode.id || node.isOutdated) continue;
+      let conflict = false;
+
+      for (const [propKey, propVal] of Object.entries(node.properties)) {
+        const propKeyLower  = String(propKey).toLowerCase();
+        const propValLower  = String(propVal).toLowerCase().trim();
+
+        // Mode 1: same role value on another node's property
+        if (isRoleValue && propValLower === val) { conflict = true; break; }
+
+        // Mode 2: same role-like attribute key exists on another node
+        if (isRoleAttr && propKeyLower === attr) { conflict = true; break; }
+      }
+
+      if (conflict) graph.markOutdated(node.id, entityNode.id);
+    }
   }
 
   /** Fuzzy entity name matching - handles "Alex" matching "Alex Chen" */

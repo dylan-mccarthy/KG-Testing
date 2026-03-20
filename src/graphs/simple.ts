@@ -17,12 +17,16 @@ export class SimpleGraph implements IKnowledgeGraph {
   }
 
   addNode(label: string, properties: Record<string, unknown> = {}, tags: string[] = []): NodeData {
+    const now = Date.now();
     const node: NodeData = {
       id: generateId('n'),
       label,
       properties,
       tags: [...tags, ...label.toLowerCase().split(/\s+/)],
-      createdAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
+      version: 1,
+      isOutdated: false,
       accessCount: 0,
     };
     this.nodes.set(node.id, node);
@@ -61,8 +65,38 @@ export class SimpleGraph implements IKnowledgeGraph {
     const node = this.nodes.get(id);
     if (!node) return false;
     if (updates.label !== undefined) node.label = updates.label;
-    if (updates.properties !== undefined) Object.assign(node.properties, updates.properties);
+
+    if (updates.properties !== undefined) {
+      // Remove stale tag tokens for any property whose value is changing
+      for (const [key, newVal] of Object.entries(updates.properties)) {
+        const oldVal = node.properties[key];
+        if (oldVal !== undefined && String(oldVal).toLowerCase() !== String(newVal).toLowerCase()) {
+          const oldTokens = new Set(
+            String(oldVal).toLowerCase().split(/[\s,\-\/]+/).filter(w => w.length > 1)
+          );
+          node.tags = node.tags.filter(t => !oldTokens.has(t.toLowerCase()));
+        }
+      }
+      Object.assign(node.properties, updates.properties);
+    }
+
     if (updates.tags !== undefined) node.tags = [...new Set([...node.tags, ...updates.tags])];
+    node.updatedAt = Date.now();
+    node.version++;
+    return true;
+  }
+
+  getAllNodes(): NodeData[] {
+    return Array.from(this.nodes.values());
+  }
+
+  markOutdated(nodeId: string, supersededById?: string): boolean {
+    const node = this.nodes.get(nodeId);
+    if (!node) return false;
+    node.isOutdated = true;
+    node.updatedAt = Date.now();
+    node.version++;
+    if (supersededById) node.supersededBy = supersededById;
     return true;
   }
 

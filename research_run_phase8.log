@@ -1,0 +1,50 @@
+═══════════════════════════════════════════════
+  KG-Testing: Knowledge Graph Memory Harness  
+═══════════════════════════════════════════════
+
+🔌 Checking Ollama connection at http://192.168.86.27:11434...
+✅ Ollama connected — model: qwen3.5:4b
+
+🏷️  PHASE 8: Stale-tag cleanup + expanded conflict detection
+   Fixes: updateNode removes old value tokens; markConflictingNodes checks attr names
+   Canonical attribute normalisation: location/role/project/budget variants unified
+   History: 4,096t  |  KG: 32,768t  |  num_ctx: 40,960t
+
+
+🔬 Run: weighted_phase8_h4096_kg32768
+   Memory: weighted | Ctx: 4096
+  📋 Scenario: Personal Introduction & Career Update
+    📝 Turn 1/15 [tell]: "Hi! My name is Jordan Blake and I'm 29 years old...."
+    ✅ [3404ms, KG +1 nodes, extracted 2 facts, 1 KG hits]
+    📝 Turn 2/15 [tell]: "I work as a data analyst at a company called DataStream..."
+    ✅ [1218ms, KG +1 nodes, extracted 2 facts, 2 KG hits]
+    📝 Turn 3/15 [tell]: "I live in Austin, Texas. My favourite hobby is Brazilia..."
+    ✅ [1383ms, KG +0 nodes, extracted 3 facts, 2 KG hits]
+    🔍 Turn 4/15 [recall]: "What's my name and how old am I?..."
+    ✅ [378ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    💬 Turn 5/15 [distractor]: "Who won the FIFA World Cup in 2022?..."
+    ✅ [875ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    🔍 Turn 6/15 [recall]: "Where do I work and what's my role there?..."
+    ✅ [410ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    📝 Turn 7/15 [tell]: "I also have a golden retriever named Biscuit who is 2 y..."
+    ❌ [856ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    🔍 Turn 8/15 [recall]: "What sport do I practise and how often?..."
+    ✅ [328ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    💬 Turn 9/15 [distractor]: "Can you explain what a neural network is in simple term..."
+    ✅ [1595ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    ✏️ Turn 10/15 [update]: "Great news — I just got promoted! I'm now a Senior Data..."
+    ✅ [1282ms, KG +1 nodes, extracted 2 facts, 3 KG hits]
+    🔍 Turn 11/15 [recall]: "What's my pet's name and how old is it?..."
+    ✅ [562ms, KG +0 nodes, extracted 0 facts, 3 KG hits]
+    💬 Turn 12/15 [distractor]: "What is the boiling point of water in Fahrenheit?..."
+    ✅ [418ms, KG +0 nodes, extracted 0 facts, 3 KG hits]
+    ✅ Turn 13/15 [verify_update]: "What is my current job title?..."
+    ✅ [385ms, KG +0 nodes, extracted 0 facts, 3 KG hits]
+    🔍 Turn 14/15 [recall]: "What city do I live in?..."
+    ✅ [374ms, KG +0 nodes, extracted 0 facts, 3 KG hits]
+    ✅ Turn 15/15 [verify_update]: "How long have I been working in data? And what's my cur..."
+    ❌ [514ms, KG +0 nodes, extracted 0 facts, 3 KG hits]
+       Missing: datastream
+    📊 Accuracy: recall=100% update=100% verify=50% | KG: 3 nodes
+  📋 Scenario: Team Building & Role Reassignment
+    📝 Turn 1/15 [tell]: "I manage a small engineering team. Let me tell you abou..."

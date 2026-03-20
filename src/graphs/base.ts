@@ -8,6 +8,15 @@ export interface NodeData {
   tags: string[];
   createdAt: number;
   accessCount: number;
+  /** Epoch ms of last property change — updated on every updateNode() call */
+  updatedAt: number;
+  /** Increments on each property update — higher = more current */
+  version: number;
+  /** True when this node has been superseded by a newer conflicting fact.
+   *  Outdated nodes are excluded from KG injection. */
+  isOutdated: boolean;
+  /** ID of the node that superseded this one (for traceability) */
+  supersededBy?: string;
 }
 
 export interface EdgeData {
@@ -54,6 +63,11 @@ export interface IKnowledgeGraph {
   removeNode(id: string): boolean;
   removeEdge(id: string): boolean;
 
+  /** Return all nodes (used for conflict scanning and staleness checks) */
+  getAllNodes(): NodeData[];
+  /** Mark a node as outdated (superseded by a newer conflicting fact) */
+  markOutdated(nodeId: string, supersededById?: string): boolean;
+
   // Query
   searchByLabel(query: string, topK?: number): SearchResult[];
   searchByTags(tags: string[], topK?: number): SearchResult[];
@@ -87,7 +101,8 @@ export function scoreMatch(node: NodeData, query: string): number {
     if (propStr.includes(token)) score += 1;
   }
 
-  // Boost recently-accessed nodes
+  // Boost recently-updated and frequently-accessed nodes
+  score += Math.min(node.version * 0.3, 3);
   score += Math.min(node.accessCount * 0.1, 1);
 
   return score;

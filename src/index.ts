@@ -35,7 +35,7 @@ async function checkOllama(): Promise<boolean> {
 }
 
 function parseArgs(): {
-  mode: 'quick' | 'single' | 'research' | 'phase5' | 'phase6';
+  mode: 'quick' | 'single' | 'research' | 'phase5' | 'phase6' | 'phase7' | 'phase8';
   graphType?: GraphType;
   contextTokens?: number;
   scenarioId?: string;
@@ -53,6 +53,8 @@ function parseArgs(): {
   if (flags['quick'] === 'true') return { mode: 'quick' };
   if (flags['phase5'] === 'true') return { mode: 'phase5' };
   if (flags['phase6'] === 'true') return { mode: 'phase6' };
+  if (flags['phase7'] === 'true') return { mode: 'phase7' };
+  if (flags['phase8'] === 'true') return { mode: 'phase8' };
 
   return {
     mode: 'single',
@@ -106,6 +108,75 @@ async function runSingle(graphType: GraphType, contextTokens: number, scenarioId
 
   // @ts-ignore - filtered above
   const result = await runner.runConfig(config, scenarios);
+  const reportPath = reporter.writeRunReport(result);
+  console.log(`\n📄 Report written: ${reportPath}`);
+  console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
+}
+
+async function runPhase8(): Promise<void> {
+  const HISTORY_CTX = 4096;
+  const KG_CTX = 32768;
+  const NUM_CTX = 40960;
+
+  console.log('\n🏷️  PHASE 8: Stale-tag cleanup + expanded conflict detection');
+  console.log(`   Fixes: updateNode removes old value tokens; markConflictingNodes checks attr names`);
+  console.log(`   Canonical attribute normalisation: location/role/project/budget variants unified`);
+  console.log(`   History: ${HISTORY_CTX.toLocaleString()}t  |  KG: ${KG_CTX.toLocaleString()}t  |  num_ctx: ${NUM_CTX.toLocaleString()}t\n`);
+
+  const runner = new TestRunner(true);
+  const reporter = new MarkdownReporter(OUTPUT_DIR);
+
+  const config: RunConfig = {
+    memoryType: 'weighted',
+    graph: { ...DEFAULT_GRAPH_CONFIG, type: 'weighted', weightedEdges: true },
+    agent: {
+      ...DEFAULT_AGENT_CONFIG,
+      maxContextTokens: HISTORY_CTX,
+      maxKgTokens: KG_CTX,
+      numCtx: NUM_CTX,
+      timeoutMs: 120000,
+    },
+    maxTurns: 60,
+    outputDir: OUTPUT_DIR,
+    runLabel: `weighted_phase8_h${HISTORY_CTX}_kg${KG_CTX}`,
+  };
+
+  const allScenarios = [...ALL_SCENARIOS, engineeringOrgDeepDive];
+  const result = await runner.runConfig(config, allScenarios);
+  const reportPath = reporter.writeRunReport(result);
+  console.log(`\n📄 Report written: ${reportPath}`);
+  console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
+}
+
+async function runPhase7(): Promise<void> {
+  const HISTORY_CTX = 4096;
+  const KG_CTX = 32768;
+  const NUM_CTX = 40960;
+
+  console.log('\n🏷️  PHASE 7: Staleness metadata + split-budget context');
+  console.log(`   New: isOutdated flag, version tracking, conflict detection, freshness annotations`);
+  console.log(`   History: ${HISTORY_CTX.toLocaleString()}t  |  KG: ${KG_CTX.toLocaleString()}t  |  num_ctx: ${NUM_CTX.toLocaleString()}t\n`);
+
+  const runner = new TestRunner(true);
+  const reporter = new MarkdownReporter(OUTPUT_DIR);
+
+  const config: RunConfig = {
+    memoryType: 'weighted',
+    graph: { ...DEFAULT_GRAPH_CONFIG, type: 'weighted', weightedEdges: true },
+    agent: {
+      ...DEFAULT_AGENT_CONFIG,
+      maxContextTokens: HISTORY_CTX,
+      maxKgTokens: KG_CTX,
+      numCtx: NUM_CTX,
+      timeoutMs: 120000,
+    },
+    maxTurns: 60,
+    outputDir: OUTPUT_DIR,
+    runLabel: `weighted_staleness_h${HISTORY_CTX}_kg${KG_CTX}`,
+  };
+
+  const allScenarios = [...ALL_SCENARIOS, engineeringOrgDeepDive];
+  const result = await runner.runConfig(config, allScenarios);
   const reportPath = reporter.writeRunReport(result);
   console.log(`\n📄 Report written: ${reportPath}`);
   console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
@@ -247,6 +318,12 @@ async function main(): Promise<void> {
       break;
     case 'phase6':
       await runPhase6();
+      break;
+    case 'phase7':
+      await runPhase7();
+      break;
+    case 'phase8':
+      await runPhase8();
       break;
     case 'single':
     default:

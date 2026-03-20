@@ -157,6 +157,9 @@ export class RAGAgent {
         properties: r.chunk.metadata as Record<string, unknown>,
         tags: [],
         createdAt: r.chunk.createdAt,
+        updatedAt: r.chunk.createdAt,
+        version: 1,
+        isOutdated: false,
         accessCount: 0,
       }));
 
