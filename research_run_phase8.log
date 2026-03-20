@@ -48,3 +48,246 @@
     📊 Accuracy: recall=100% update=100% verify=50% | KG: 3 nodes
   📋 Scenario: Team Building & Role Reassignment
     📝 Turn 1/15 [tell]: "I manage a small engineering team. Let me tell you abou..."
+    ✅ [1119ms, KG +2 nodes, extracted 2 facts, 2 KG hits]
+    📝 Turn 2/15 [tell]: "Then we have Marcus. He's our DevOps engineer and handl..."
+    ✅ [1851ms, KG +1 nodes, extracted 3 facts, 3 KG hits]
+    📝 Turn 3/15 [tell]: "Our frontend developer is Yuki. She's excellent with Re..."
+    ✅ [2173ms, KG +1 nodes, extracted 4 facts, 4 KG hits]
+    🔍 Turn 4/15 [recall]: "What does Priya specialise in?..."
+    ✅ [474ms, KG +0 nodes, extracted 0 facts, 4 KG hits]
+    📝 Turn 5/15 [tell]: "I should also mention our QA lead, Dmitri. He's been wi..."
+    ✅ [2281ms, KG +1 nodes, extracted 3 facts, 5 KG hits]
+    💬 Turn 6/15 [distractor]: "What's the difference between TCP and UDP?..."
+    ✅ [3107ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    🔍 Turn 7/15 [recall]: "Who manages our cloud infrastructure and what platform ..."
+    ✅ [677ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    🔍 Turn 8/15 [recall]: "How long has Yuki been on the team and what's her tech ..."
+    ✅ [705ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    💬 Turn 9/15 [distractor]: "Can you give me a quick overview of what Kubernetes doe..."
+    ✅ [2675ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    ✏️ Turn 10/15 [update]: "Big news — Priya has been promoted to Tech Lead. She's ..."
+    ✅ [2741ms, KG +0 nodes, extracted 3 facts, 5 KG hits]
+    🔍 Turn 11/15 [recall]: "How long has Dmitri been with us and what does he do?..."
+    ✅ [918ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    💬 Turn 12/15 [distractor]: "What year was Python first released?..."
+    ✅ [1224ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    ✅ Turn 13/15 [verify_update]: "What is Priya's current role?..."
+    ✅ [916ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    🔍 Turn 14/15 [recall]: "Who's our frontend developer and what does she work wit..."
+    ✅ [868ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    ✅ Turn 15/15 [verify_update]: "Give me a quick summary of Priya — what changed about h..."
+    ✅ [1142ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    📊 Accuracy: recall=100% update=100% verify=100% | KG: 5 nodes
+  📋 Scenario: Project Tracking & Milestone Changes
+    📝 Turn 1/15 [tell]: "We just kicked off Project Orion today — it's a custome..."
+    ✅ [1818ms, KG +1 nodes, extracted 5 facts, 1 KG hits]
+    📝 Turn 2/15 [tell]: "Our design phase is planned to run through the end of M..."
+    ✅ [1676ms, KG +1 nodes, extracted 4 facts, 2 KG hits]
+    📝 Turn 3/15 [tell]: "The development phase starts April 1st and we're target..."
+    ✅ [1742ms, KG +0 nodes, extracted 2 facts, 2 KG hits]
+    🔍 Turn 4/15 [recall]: "What's the budget for Project Orion and who is our clie..."
+    ✅ [577ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    💬 Turn 5/15 [distractor]: "What does REST stand for in REST API?..."
+    ✅ [693ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    📝 Turn 6/15 [tell]: "We've decided to use React on the frontend and a Node.j..."
+    ✅ [1928ms, KG +0 nodes, extracted 3 facts, 2 KG hits]
+    🔍 Turn 7/15 [recall]: "When does our development phase kick off and who's lead..."
+    ✅ [426ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    🔍 Turn 8/15 [recall]: "What's the tech stack we chose for Orion?..."
+    ✅ [505ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    💬 Turn 9/15 [distractor]: "What is SOLID in software engineering?..."
+    ✅ [2620ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    ✏️ Turn 10/15 [update]: "Bad news — we've hit a scope expansion. The beta releas..."
+    ✅ [2207ms, KG +0 nodes, extracted 4 facts, 2 KG hits]
+    📝 Turn 11/15 [tell]: "The payment module will be built by an external vendor ..."
+    ❌ [1723ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    🔍 Turn 12/15 [recall]: "What database are we using and what's the team size?..."
+    ✅ [616ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    💬 Turn 13/15 [distractor]: "Explain the difference between a stack and a queue...."
+    ✅ [3207ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    ✅ Turn 14/15 [verify_update]: "When is our beta release now?..."
+    ✅ [832ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    ✅ Turn 15/15 [verify_update]: "Why did the beta get pushed back, and who is handling t..."
+    ✅ [1093ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+    📊 Accuracy: recall=100% update=100% verify=100% | KG: 2 nodes
+  📋 Scenario: Social Network & Relationship Updates
+    📝 Turn 1/15 [tell]: "I want to tell you about my friend Sam. Sam is a graphi..."
+    ✅ [1015ms, KG +1 nodes, extracted 3 facts, 1 KG hits]
+    📝 Turn 2/15 [tell]: "My other close friend is Tariq. He's a high school math..."
+    ✅ [1460ms, KG +1 nodes, extracted 3 facts, 2 KG hits]
+    📝 Turn 3/15 [tell]: "And there's Lena — she's a freelance photographer based..."
+    ✅ [1972ms, KG +1 nodes, extracted 3 facts, 3 KG hits]
+    🔍 Turn 4/15 [recall]: "Where does Sam live and what does she do for work?..."
+    ✅ [443ms, KG +0 nodes, extracted 0 facts, 3 KG hits]
+    💬 Turn 5/15 [distractor]: "What's the capital city of Australia?..."
+    ✅ [345ms, KG +0 nodes, extracted 0 facts, 3 KG hits]
+    🔍 Turn 6/15 [recall]: "How long has Tariq been teaching and what subject?..."
+    ❌ [474ms, KG +0 nodes, extracted 0 facts, 3 KG hits]
+       Missing: teacher
+    📝 Turn 7/15 [tell]: "I should also mention my friend Zoe. She's a software d..."
+    ✅ [2091ms, KG +2 nodes, extracted 3 facts, 5 KG hits]
+    🔍 Turn 8/15 [recall]: "What kind of photography does Lena do and where is she ..."
+    ✅ [497ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    💬 Turn 9/15 [distractor]: "What is the speed of light in kilometres per second?..."
+    ✅ [527ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    ✏️ Turn 10/15 [update]: "Big life update — Sam has moved from Melbourne to Sydne..."
+    ✅ [2086ms, KG +0 nodes, extracted 4 facts, 5 KG hits]
+    🔍 Turn 11/15 [recall]: "Where does Zoe work and what does she do?..."
+    ❌ [523ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+       Missing: toronto
+    💬 Turn 12/15 [distractor]: "Who wrote the novel '1984'?..."
+    ✅ [394ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    ✅ Turn 13/15 [verify_update]: "Where does Sam live now?..."
+    ✅ [490ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    🔍 Turn 14/15 [recall]: "Tell me about Tariq — where is he, how long has he taug..."
+    ✅ [574ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    ✅ Turn 15/15 [verify_update]: "What's Sam's current work situation — where is she and ..."
+    ✅ [655ms, KG +0 nodes, extracted 0 facts, 5 KG hits]
+    📊 Accuracy: recall=60% update=100% verify=100% | KG: 5 nodes
+  📋 Scenario: Mixed Facts with Multiple Concurrent Updates
+    📝 Turn 1/15 [tell]: "Hi, I'm Mei Tanaka. I'm a 32-year-old UX researcher at ..."
+    ✅ [1375ms, KG +1 nodes, extracted 4 facts, 1 KG hits]
+    📝 Turn 2/15 [tell]: "I live in Singapore and I commute to work by MRT. I've ..."
+    ✅ [1508ms, KG +1 nodes, extracted 3 facts, 2 KG hits]
+    📝 Turn 3/15 [tell]: "I'm currently learning Spanish — I'm at B1 level. I tak..."
+    ✅ [2340ms, KG +0 nodes, extracted 5 facts, 2 KG hits]
+    🔍 Turn 4/15 [recall]: "What's my job and where do I work?..."
+    ❌ [440ms, KG +0 nodes, extracted 0 facts, 2 KG hits]
+       Missing: mei
+    📝 Turn 5/15 [tell]: "My current project at work is called HealthSync — we're..."
+    ✅ [1414ms, KG +1 nodes, extracted 2 facts, 3 KG hits]
+    💬 Turn 6/15 [distractor]: "What is the most spoken language in the world by native..."
+    ✅ [1053ms, KG +0 nodes, extracted 0 facts, 3 KG hits]
+    🔍 Turn 7/15 [recall]: "What language am I learning and what level am I at?..."
+    ✅ [340ms, KG +0 nodes, extracted 0 facts, 3 KG hits]
+    🔍 Turn 8/15 [recall]: "How long have I been at VitalMetrics and how do I commu..."
+    ❌ [399ms, KG +0 nodes, extracted 0 facts, 3 KG hits]
+       Missing: singapore
+    ✏️ Turn 9/15 [update]: "I recently passed my Spanish B2 exam! I've moved up fro..."
+    ✅ [1728ms, KG +1 nodes, extracted 3 facts, 4 KG hits]
+    💬 Turn 10/15 [distractor]: "Can you explain what UX research involves?..."
+    ✅ [1492ms, KG +0 nodes, extracted 0 facts, 4 KG hits]
+    🔍 Turn 11/15 [recall]: "What project am I working on at VitalMetrics?..."
+    ✅ [661ms, KG +0 nodes, extracted 0 facts, 4 KG hits]
+    ✏️ Turn 12/15 [update]: "I've also just moved apartments — I'm now in the Jurong..."
+    ✅ [1479ms, KG +0 nodes, extracted 1 facts, 4 KG hits]
+    ✅ Turn 13/15 [verify_update]: "What's my current level in Spanish?..."
+    ✅ [599ms, KG +0 nodes, extracted 0 facts, 4 KG hits]
+    🔍 Turn 14/15 [recall]: "What is my name and how old am I?..."
+    ✅ [527ms, KG +0 nodes, extracted 0 facts, 4 KG hits]
+    ✅ Turn 15/15 [verify_update]: "Where in Singapore am I living now?..."
+    ✅ [516ms, KG +0 nodes, extracted 0 facts, 4 KG hits]
+    📊 Accuracy: recall=60% update=100% verify=100% | KG: 4 nodes
+  📋 Scenario: Engineering Org Deep Dive (Large Context)
+    📝 Turn 1/48 [tell]: "Hi! I'm Alex Rivera, VP of Engineering at TechCore Anal..."
+    ✅ [3916ms, KG +2 nodes, extracted 10 facts, 2 KG hits]
+    📝 Turn 2/48 [tell]: "My direct reports are five team leads. First is Maya Ch..."
+    ✅ [5784ms, KG +1 nodes, extracted 16 facts, 3 KG hits]
+    📝 Turn 3/48 [tell]: "Second direct report: Omar Vance is my Frontend Lead. O..."
+    ✅ [6101ms, KG +1 nodes, extracted 17 facts, 4 KG hits]
+    📝 Turn 4/48 [tell]: "Third: Priya Nair is our Data Platform Lead. Her team o..."
+    ✅ [4278ms, KG +1 nodes, extracted 13 facts, 5 KG hits]
+    📝 Turn 5/48 [tell]: "Fourth and fifth direct reports: Sam Okafor is my DevOp..."
+    ✅ [6063ms, KG +2 nodes, extracted 14 facts, 7 KG hits]
+    📝 Turn 6/48 [tell]: "Let me walk you through our three active projects. Proj..."
+    ✅ [3693ms, KG +2 nodes, extracted 9 facts, 9 KG hits]
+    📝 Turn 7/48 [tell]: "Atlas is built on a React and TypeScript frontend, a No..."
+    ❌ [2212ms, KG +0 nodes, extracted 0 facts, 9 KG hits]
+    📝 Turn 8/48 [tell]: "Project Beacon is our machine learning pipeline moderni..."
+    ✅ [5668ms, KG +1 nodes, extracted 11 facts, 10 KG hits]
+    📝 Turn 9/48 [tell]: "Project Chroma is the mobile app rewrite. Zoe's team is..."
+    ✅ [4962ms, KG +3 nodes, extracted 8 facts, 13 KG hits]
+    📝 Turn 10/48 [tell]: "On the infrastructure side, Sam's team recently complet..."
+    ✅ [6773ms, KG +3 nodes, extracted 13 facts, 16 KG hits]
+    🔍 Turn 11/48 [recall]: "What's Maya's technical specialisation and how big is h..."
+    ✅ [1353ms, KG +0 nodes, extracted 0 facts, 16 KG hits]
+    💬 Turn 12/48 [distractor]: "Can you give me a quick primer on what CAP theorem mean..."
+    ✅ [3651ms, KG +0 nodes, extracted 0 facts, 16 KG hits]
+    🔍 Turn 13/48 [recall]: "What's the budget and target completion date for Projec..."
+    ✅ [1876ms, KG +0 nodes, extracted 0 facts, 16 KG hits]
+    💬 Turn 14/48 [distractor]: "What's the difference between blue-green deployment and..."
+    ✅ [7251ms, KG +0 nodes, extracted 0 facts, 16 KG hits]
+    🔍 Turn 15/48 [recall]: "How many active users does the mobile app have, and who..."
+    ✅ [2177ms, KG +0 nodes, extracted 0 facts, 16 KG hits]
+    📝 Turn 16/48 [tell]: "Our engineering culture is built around a few core prac..."
+    ❌ [3029ms, KG +0 nodes, extracted 0 facts, 16 KG hits]
+    📝 Turn 17/48 [tell]: "On hiring: I'm currently running 4 open roles. Two seni..."
+    ✅ [7567ms, KG +5 nodes, extracted 15 facts, 21 KG hits]
+    📝 Turn 18/48 [tell]: "Our engineering ladders go from L1 (junior) to L7 (prin..."
+    ✅ [6931ms, KG +1 nodes, extracted 13 facts, 22 KG hits]
+    📝 Turn 19/48 [tell]: "Our tech debt backlog is substantial — we estimate abou..."
+    ✅ [4882ms, KG +3 nodes, extracted 7 facts, 25 KG hits]
+    📝 Turn 20/48 [tell]: "Our annual engineering budget is $2.4 million. Roughly ..."
+    ✅ [5088ms, KG +4 nodes, extracted 7 facts, 29 KG hits]
+    💬 Turn 21/48 [distractor]: "What is the general difference between a monolith and a..."
+    ✅ [8306ms, KG +0 nodes, extracted 0 facts, 29 KG hits]
+    📝 Turn 22/48 [tell]: "One thing I should add about Arjun — he's been at TechC..."
+    ✅ [6582ms, KG +1 nodes, extracted 15 facts, 30 KG hits]
+    📝 Turn 23/48 [tell]: "I need to tell you about some recent team changes. Omar..."
+    ✅ [4596ms, KG +1 nodes, extracted 3 facts, 31 KG hits]
+    ✏️ Turn 24/48 [update]: "I've decided to promote Lena Park into the Frontend Lea..."
+    ✅ [5242ms, KG +1 nodes, extracted 8 facts, 31 KG hits]
+    💬 Turn 25/48 [distractor]: "How does React's virtual DOM reconciliation algorithm w..."
+    ✅ [6136ms, KG +0 nodes, extracted 0 facts, 31 KG hits]
+    🔍 Turn 26/48 [recall]: "Who is the current Frontend Lead and how did they get t..."
+    ❌ [2873ms, KG +0 nodes, extracted 0 facts, 31 KG hits]
+       Forbidden found: omar
+    📝 Turn 27/48 [tell]: "Lena's background in more detail: she graduated from UC..."
+    ✅ [5853ms, KG +2 nodes, extracted 7 facts, 33 KG hits]
+    📝 Turn 28/48 [tell]: "Project Atlas had a scope change last week. The product..."
+    ❌ [4572ms, KG +0 nodes, extracted 0 facts, 33 KG hits]
+    📝 Turn 29/48 [tell]: "Because of the Atlas scope expansion I've been in budge..."
+    ✅ [5274ms, KG +1 nodes, extracted 3 facts, 34 KG hits]
+    ✏️ Turn 30/48 [update]: "To be clear on the Atlas update: the budget is now $550..."
+    ✅ [5279ms, KG +0 nodes, extracted 3 facts, 34 KG hits]
+    💬 Turn 31/48 [distractor]: "Can you explain what event-driven architecture means an..."
+    ✅ [6012ms, KG +0 nodes, extracted 0 facts, 34 KG hits]
+    🔍 Turn 32/48 [recall]: "What's the current approved budget for Project Atlas an..."
+    ❌ [2536ms, KG +0 nodes, extracted 0 facts, 34 KG hits]
+       Forbidden found: 400, september
+    📝 Turn 33/48 [tell]: "On a personal note: I've accepted a new living arrangem..."
+    ❌ [3508ms, KG +0 nodes, extracted 0 facts, 34 KG hits]
+    ✏️ Turn 34/48 [update]: "Just confirming: I am Alex Rivera, and I'm moving to Sa..."
+    ✅ [3849ms, KG +0 nodes, extracted 2 facts, 34 KG hits]
+    💬 Turn 35/48 [distractor]: "What's the general concept behind Infrastructure as Cod..."
+    ✅ [5934ms, KG +0 nodes, extracted 0 facts, 34 KG hits]
+    📝 Turn 36/48 [tell]: "The relocation means I'll be attending our bi-weekly le..."
+    ✅ [7847ms, KG +0 nodes, extracted 14 facts, 34 KG hits]
+    📝 Turn 37/48 [tell]: "Also in the last two weeks: Priya's data platform team ..."
+    ✅ [5856ms, KG +1 nodes, extracted 6 facts, 35 KG hits]
+    🔍 Turn 38/48 [recall]: "What's Maya's technical specialisation and where does s..."
+    ✅ [3594ms, KG +0 nodes, extracted 0 facts, 35 KG hits]
+    🔍 Turn 39/48 [recall]: "What database does Project Atlas use and what's the fro..."
+    ✅ [4293ms, KG +0 nodes, extracted 0 facts, 35 KG hits]
+    🔍 Turn 40/48 [recall]: "What was TechCore's total headcount and what was the co..."
+    ✅ [2236ms, KG +0 nodes, extracted 0 facts, 35 KG hits]
+    💬 Turn 41/48 [distractor]: "What's the difference between horizontal and vertical s..."
+    ✅ [7142ms, KG +0 nodes, extracted 0 facts, 35 KG hits]
+    🔍 Turn 42/48 [recall]: "How many engineers does Sam Okafor manage and what clou..."
+    ✅ [3022ms, KG +0 nodes, extracted 0 facts, 35 KG hits]
+    🔍 Turn 43/48 [recall]: "What was the original Project Atlas budget before the s..."
+    ✅ [2420ms, KG +0 nodes, extracted 0 facts, 35 KG hits]
+    ✅ Turn 44/48 [verify_update]: "Who is the Frontend Lead on my team right now?..."
+    ❌ [3170ms, KG +0 nodes, extracted 0 facts, 35 KG hits]
+       Forbidden found: omar
+    ✅ Turn 45/48 [verify_update]: "What's the current budget for Project Atlas?..."
+    ❌ [2417ms, KG +0 nodes, extracted 0 facts, 35 KG hits]
+       Forbidden found: 400
+    ✅ Turn 46/48 [verify_update]: "Where am I, Alex Rivera, currently based?..."
+    ❌ [2294ms, KG +0 nodes, extracted 0 facts, 35 KG hits]
+       Forbidden found: seattle
+    ✅ Turn 47/48 [verify_update]: "Which project is Priya Nair's team currently supporting..."
+    ❌ [2397ms, KG +0 nodes, extracted 0 facts, 35 KG hits]
+       Forbidden found: beacon
+    🔍 Turn 48/48 [recall]: "Give me a quick summary — how many direct reports do I ..."
+    ❌ [3262ms, KG +0 nodes, extracted 0 facts, 35 KG hits]
+       Missing: sam
+    📊 Accuracy: recall=73% update=100% verify=0% | KG: 36 nodes
+
+  📊 Run complete: overall=87.8% recall=82.1% update=100.0% verify=75.0%
+
+📄 Report written: results/weighted_phase8_h4096_kg32768.md
+
+📊 Final: 87.8% accuracy across 123 turns
+
+✅ Done!

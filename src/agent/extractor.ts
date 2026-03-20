@@ -25,11 +25,20 @@ const EXTRACTION_SYSTEM = `/no_think
 You are a fact extraction assistant. Extract structured facts from user messages.
 Return ONLY a valid JSON array with no explanation. Each element:
 - "entity": the subject (use proper names, e.g. "Alex", "Project Phoenix")
-- "attribute": the property (e.g. "job", "age", "location")
+- "attribute": the property — ALWAYS use these canonical names when applicable:
+  * current location / city / where they live or are based → "location"
+  * role, title, position, job title, designation → "role"
+  * current project / assignment / supporting / working on → "project"
+  * budget / cost / funding / approved amount → "budget"
+  * company / employer / organisation → "company"
+  * language proficiency level → "level"
+  * team size / headcount → "team_size"
+  * reporting manager → "reports_to"
+  * (for anything else use a short lowercase snake_case descriptor)
 - "value": the value (e.g. "engineer", "34", "Austin")
 - "relatedEntity": (optional) for relationships, the other entity name
 - "relation": (optional) edge type if relatedEntity present
-- "isUpdate": true ONLY if user explicitly says something changed or was updated
+- "isUpdate": true if the user says something changed, is new/current, or was updated
 
 Return [] if no concrete facts are shared (e.g. questions, general chat).
 Return ONLY the JSON array. Nothing else.`;
@@ -42,19 +51,26 @@ const CANONICAL_ATTRS: Record<string, string> = {
   // Location
   city: 'location', current_location: 'location', lives_in: 'location',
   based_in: 'location', relocated_to: 'location', home: 'location',
+  moving_to: 'location', new_location: 'location', residence: 'location',
   // Role / title
   title: 'role', position: 'role', job_title: 'role', current_role: 'role',
   new_role: 'role', promoted_to: 'role', designation: 'role',
+  job: 'role', occupation: 'role', career: 'role',
   // Project / assignment
   current_project: 'project', assigned_to: 'project', working_on: 'project',
   supporting: 'project', assigned_project: 'project', team_assignment: 'project',
+  now_supporting: 'project', reassigned_to: 'project',
   // Budget
   current_budget: 'budget', approved_budget: 'budget', total_budget: 'budget',
   new_budget: 'budget', updated_budget: 'budget', revised_budget: 'budget',
+  project_budget: 'budget',
   // Employment
   employer: 'company', works_at: 'company', employed_by: 'company',
   // Language proficiency
   proficiency: 'level', fluency: 'level', skill_level: 'level',
+  spanish_level: 'level', language_level: 'level',
+  // Tenure
+  years_at_company: 'tenure', time_at_company: 'tenure', joined: 'tenure',
 };
 
 function canonicalizeAttr(attr: string): string {
@@ -205,28 +221,29 @@ export class FactExtractor {
   }
 
   /**
-   * When a new fact assigns a role/title/lead/position value to an entity, scan ALL
-   * other (non-outdated) nodes for the same value in any property field.
-   * If found on a different entity, mark that node as outdated (superseded).
+   * When a new fact assigns a role/title/lead/position to an entity, scan ALL
+   * other (non-outdated) nodes for a conflicting value and mark them outdated.
    *
-   * Two detection modes:
-   *  1. VALUE-based: fact.value is a role title (e.g. "Frontend Lead") →
-   *     find any node whose property VALUE equals that title → mark outdated.
-   *  2. ATTR-based: fact.attribute is a role-like key (e.g. "role", "lead") →
-   *     find any OTHER node that has the same attribute key → mark outdated.
-   *     This catches cases where the extractor stores the fact as
-   *     {entity: "Alex", attribute: "frontend_lead", value: "Lena"} rather than
-   *     {entity: "Lena", attribute: "role", value: "Frontend Lead"}.
+   * Three detection modes:
+   *  1. VALUE fuzzy: fact.value contains/is-contained-by a role word →
+   *     find nodes whose property VALUE overlaps with this role string → mark outdated.
+   *  2. ATTR-key: fact.attribute is a role-like key (e.g. "role", "lead") →
+   *     find any OTHER node with the same attribute key → mark outdated.
+   *  3. ENTITY-LOCATION/PROJECT: for "location" and "project" attributes,
+   *     if the same entity node already has a different value for that canonical key,
+   *     the updateNode() call already overwrote it — no extra action needed.
+   *     BUT if the LLM stored a SEPARATE "location" node that is now stale, mark it.
    */
   private markConflictingNodes(fact: ExtractedFact, entityNode: NodeData, graph: IKnowledgeGraph): void {
-    const val = String(fact.value).toLowerCase().trim();
+    const val  = String(fact.value).toLowerCase().trim();
     const attr = String(fact.attribute).toLowerCase().trim();
-    if (val.length < 5) return;
+    if (val.length < 3) return;
 
     const roleHints = ['lead', 'manager', 'director', 'head', 'chief', 'vp', 'cto', 'ceo', 'coo',
       'officer', 'engineer', 'developer', 'analyst', 'architect', 'owner'];
+
     const isRoleValue = roleHints.some(h => val.includes(h));
-    const isRoleAttr  = roleHints.some(h => attr.includes(h));
+    const isRoleAttr  = roleHints.some(h => attr.includes(h)) || attr === 'role' || attr === 'title';
 
     if (!isRoleValue && !isRoleAttr) return;
 
@@ -235,14 +252,19 @@ export class FactExtractor {
       let conflict = false;
 
       for (const [propKey, propVal] of Object.entries(node.properties)) {
-        const propKeyLower  = String(propKey).toLowerCase();
-        const propValLower  = String(propVal).toLowerCase().trim();
+        const pk = String(propKey).toLowerCase();
+        const pv = String(propVal).toLowerCase().trim();
 
-        // Mode 1: same role value on another node's property
-        if (isRoleValue && propValLower === val) { conflict = true; break; }
+        // Mode 1 — fuzzy value match (handles "Frontend Lead" ≈ "new Frontend Lead")
+        if (isRoleValue && (pv === val || pv.includes(val) || val.includes(pv))) {
+          conflict = true; break;
+        }
 
-        // Mode 2: same role-like attribute key exists on another node
-        if (isRoleAttr && propKeyLower === attr) { conflict = true; break; }
+        // Mode 2 — same role-like attribute key on a different node
+        if (isRoleAttr && (pk === attr || pk === 'role' || pk === 'title')) {
+          // Only conflict if the OTHER node has a role value that overlaps this one
+          if (roleHints.some(h => pv.includes(h))) { conflict = true; break; }
+        }
       }
 
       if (conflict) graph.markOutdated(node.id, entityNode.id);
