@@ -21,13 +21,17 @@ export interface AgentConfig {
   ollamaEndpoint: string;
   model: string;
   embeddingModel: string;
-  /** Max tokens kept in conversation context (forces memory use) */
+  /** Max tokens kept in conversation history (forces memory use by trimming old turns) */
   maxContextTokens: number;
-  /** Ollama num_ctx — model context window size. Defaults to 4096. Set to match maxContextTokens + headroom. */
+  /** When set, enables split-budget mode: KG facts get their own token budget
+   *  independent of maxContextTokens. Allows large KG injection (e.g. 32k) while
+   *  keeping history tight (e.g. 4k). Set numCtx >= maxContextTokens + maxKgTokens + ~1k. */
+  maxKgTokens?: number;
+  /** Ollama num_ctx — model context window size. Defaults to 4096. Set to match maxContextTokens + maxKgTokens + headroom. */
   numCtx?: number;
   /** HTTP timeout for Ollama requests in ms. Defaults to 120000. Increase for large contexts. */
   timeoutMs?: number;
-  /** Number of memory results injected per turn */
+  /** Number of memory results injected per turn (ignored in split-budget mode which uses all available nodes) */
   topK: number;
   /** Temperature for generation */
   temperature: number;

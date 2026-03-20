@@ -56,7 +56,8 @@ export class KGAgent {
     });
     this.contextManager = new ContextManager(
       config.maxContextTokens,
-      config.systemPrompt || DEFAULT_SYSTEM_PROMPT
+      config.systemPrompt || DEFAULT_SYSTEM_PROMPT,
+      config.maxKgTokens,
     );
     this.extractor = new FactExtractor(this.client);
     this.session = {
@@ -89,12 +90,18 @@ export class KGAgent {
     const queryTerms = this.extractQueryTerms(userMessage);
     if (!queryTerms) return { nodes: [], memoryText: '' };
 
+    // In split-budget mode, retrieve all nodes — token truncation caps the output.
+    // In shared-pool mode, respect topK to avoid bloating the shared budget.
+    const effectiveTopK = this.config.maxKgTokens
+      ? Math.max(this.config.topK * 10, this.graph.getStats().nodeCount)
+      : this.config.topK;
+
     // Search by label match
-    const labelResults = this.graph.searchByLabel(queryTerms, this.config.topK);
+    const labelResults = this.graph.searchByLabel(queryTerms, effectiveTopK);
 
     // Also try tag-based search
     const tags = queryTerms.split(' ').filter(t => t.length > 3);
-    const tagResults = tags.length > 0 ? this.graph.searchByTags(tags, this.config.topK) : [];
+    const tagResults = tags.length > 0 ? this.graph.searchByTags(tags, effectiveTopK) : [];
 
     // Merge and deduplicate by node id
     const seen = new Set<string>();
@@ -114,7 +121,7 @@ export class KGAgent {
       }
     }
 
-    const topNodes = allNodes.slice(0, this.config.topK * 2);
+    const topNodes = allNodes.slice(0, effectiveTopK * 2);
     if (topNodes.length === 0) return { nodes: [], memoryText: '' };
 
     const lines: string[] = [];

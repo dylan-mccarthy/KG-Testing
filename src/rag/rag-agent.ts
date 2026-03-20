@@ -43,6 +43,7 @@ export class RAGAgent {
     this.contextManager = new ContextManager(
       config.maxContextTokens,
       config.systemPrompt ?? RAG_SYSTEM_PROMPT,
+      config.maxKgTokens,
     );
     this.extractor = new FactExtractor(this.client);
     this.session = { sessionId, graphType: 'rag', turns: [], totalTokensUsed: 0 };

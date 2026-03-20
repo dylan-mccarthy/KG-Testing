@@ -35,7 +35,7 @@ async function checkOllama(): Promise<boolean> {
 }
 
 function parseArgs(): {
-  mode: 'quick' | 'single' | 'research' | 'phase5';
+  mode: 'quick' | 'single' | 'research' | 'phase5' | 'phase6';
   graphType?: GraphType;
   contextTokens?: number;
   scenarioId?: string;
@@ -52,6 +52,7 @@ function parseArgs(): {
   if (flags['research'] === 'true') return { mode: 'research' };
   if (flags['quick'] === 'true') return { mode: 'quick' };
   if (flags['phase5'] === 'true') return { mode: 'phase5' };
+  if (flags['phase6'] === 'true') return { mode: 'phase6' };
 
   return {
     mode: 'single',
@@ -105,6 +106,48 @@ async function runSingle(graphType: GraphType, contextTokens: number, scenarioId
 
   // @ts-ignore - filtered above
   const result = await runner.runConfig(config, scenarios);
+  const reportPath = reporter.writeRunReport(result);
+  console.log(`\n📄 Report written: ${reportPath}`);
+  console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
+}
+
+async function runPhase6(): Promise<void> {
+  // Split-budget: 4k history (no old values leaking) + 32k KG injection (full current state)
+  // num_ctx: 4096 + 32768 + ~2048 system overhead = ~39k → use 40960
+  const HISTORY_CTX = 4096;
+  const KG_CTX = 32768;
+  const NUM_CTX = 40960;
+
+  console.log('\n🔬 PHASE 6: Split-budget context test');
+  console.log(`   History: ${HISTORY_CTX.toLocaleString()} tokens  |  KG injection: ${KG_CTX.toLocaleString()} tokens`);
+  console.log(`   num_ctx: ${NUM_CTX.toLocaleString()} tokens  |  Method: weighted KG`);
+  console.log(`   Scenarios: Engineering Org Deep Dive + all 5 standard scenarios\n`);
+
+  const runner = new TestRunner(true);
+  const reporter = new MarkdownReporter(OUTPUT_DIR);
+
+  const config: RunConfig = {
+    memoryType: 'weighted',
+    graph: {
+      ...DEFAULT_GRAPH_CONFIG,
+      type: 'weighted',
+      weightedEdges: true,
+    },
+    agent: {
+      ...DEFAULT_AGENT_CONFIG,
+      maxContextTokens: HISTORY_CTX,
+      maxKgTokens: KG_CTX,
+      numCtx: NUM_CTX,
+      timeoutMs: 120000,
+    },
+    maxTurns: 60,
+    outputDir: OUTPUT_DIR,
+    runLabel: `weighted_split_h${HISTORY_CTX}_kg${KG_CTX}`,
+  };
+
+  // Run all standard scenarios + the large-context deep-dive
+  const allScenarios = [...ALL_SCENARIOS, engineeringOrgDeepDive];
+  const result = await runner.runConfig(config, allScenarios);
   const reportPath = reporter.writeRunReport(result);
   console.log(`\n📄 Report written: ${reportPath}`);
   console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
@@ -201,6 +244,9 @@ async function main(): Promise<void> {
       break;
     case 'phase5':
       await runPhase5();
+      break;
+    case 'phase6':
+      await runPhase6();
       break;
     case 'single':
     default:
