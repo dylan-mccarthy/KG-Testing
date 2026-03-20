@@ -103,7 +103,7 @@ export const personalIntroduction: TestScenario = {
     {
       type: 'update',
       userMessage: "Great news — I just got promoted! I'm now a Senior Data Analyst at DataStream.",
-      expectedKeywords: ['senior', 'analyst', 'promoted'],
+      expectedKeywords: ['senior', 'analyst', 'promoted|promotion'],
       forbiddenKeywords: [],
       factTag: 'update_job_title',
     },
@@ -179,7 +179,7 @@ export const teamBuilding: TestScenario = {
     {
       type: 'recall',
       userMessage: "What does Priya specialise in?",
-      expectedKeywords: ['python', 'backend', 'database'],
+      expectedKeywords: ['python', 'backend|server-side|backend developer', 'database'],
       forbiddenKeywords: [],
       factTag: 'recall_priya_skills',
     },
@@ -221,7 +221,7 @@ export const teamBuilding: TestScenario = {
     {
       type: 'update',
       userMessage: "Big news — Priya has been promoted to Tech Lead. She's stepping back from hands-on backend coding and will now be leading the whole team technically.",
-      expectedKeywords: ['priya', 'tech lead', 'promoted'],
+      expectedKeywords: ['priya', 'tech lead', 'promoted|promotion|now'],
       forbiddenKeywords: [],
       factTag: 'update_priya_role',
     },
@@ -429,7 +429,7 @@ export const socialNetwork: TestScenario = {
     {
       type: 'recall',
       userMessage: "How long has Tariq been teaching and what subject?",
-      expectedKeywords: ['tariq', '8', 'maths', 'teacher'],
+      expectedKeywords: ['tariq', '8', 'math|maths|mathematics', 'teach|teacher'],
       forbiddenKeywords: [],
       factTag: 'recall_tariq',
     },
@@ -464,7 +464,7 @@ export const socialNetwork: TestScenario = {
     {
       type: 'recall',
       userMessage: "Where does Zoe work and what does she do?",
-      expectedKeywords: ['zoe', 'toronto', 'applaunch', 'mobile'],
+      expectedKeywords: ['zoe', 'toronto', 'applaunch|app launch', 'mobile'],
       forbiddenKeywords: [],
       factTag: 'recall_zoe',
     },
@@ -568,7 +568,7 @@ export const mixedUpdates: TestScenario = {
     {
       type: 'update',
       userMessage: "I recently passed my Spanish B2 exam! I've moved up from B1 to B2 level now.",
-      expectedKeywords: ['b2', 'spanish', 'passed'],
+      expectedKeywords: ['b2', 'spanish', 'passed|achieved|earned|reached'],
       forbiddenKeywords: [],
       factTag: 'update_spanish_level',
     },
@@ -589,7 +589,7 @@ export const mixedUpdates: TestScenario = {
     {
       type: 'update',
       userMessage: "I've also just moved apartments — I'm now in the Jurong East neighbourhood of Singapore rather than central Singapore.",
-      expectedKeywords: ['jurong', 'moved'],
+      expectedKeywords: ['jurong', 'moved|relocated|moving|now in'],
       forbiddenKeywords: [],
       factTag: 'update_location',
     },

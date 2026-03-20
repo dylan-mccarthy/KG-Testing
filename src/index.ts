@@ -35,7 +35,7 @@ async function checkOllama(model = MODEL): Promise<boolean> {
 }
 
 function parseArgs(): {
-  mode: 'quick' | 'single' | 'research' | 'phase5' | 'phase6' | 'phase7' | 'phase8' | 'phase9' | 'phase10' | 'phase11' | 'phase12' | 'phase13';
+  mode: 'quick' | 'single' | 'research' | 'phase5' | 'phase6' | 'phase7' | 'phase8' | 'phase9' | 'phase10' | 'phase11' | 'phase12' | 'phase13' | 'phase14';
   graphType?: GraphType;
   contextTokens?: number;
   scenarioId?: string;
@@ -61,6 +61,7 @@ function parseArgs(): {
   if (flags['phase11'] === 'true') return { mode: 'phase11' };
   if (flags['phase12'] === 'true') return { mode: 'phase12', model: flags['model'] };
   if (flags['phase13'] === 'true') return { mode: 'phase13' };
+  if (flags['phase14'] === 'true') return { mode: 'phase14' };
 
   return {
     mode: 'single',
@@ -205,6 +206,55 @@ async function runPhase13(): Promise<void> {
   console.log(`\n📊 Phase 10 baseline (qwen3.5:4b): 90.1%`);
   const delta = (result.overallAccuracy * 100 - 90.1).toFixed(1);
   console.log(`📊 Delta vs Phase 10: ${Number(delta) >= 0 ? '+' : ''}${delta}%`);
+}
+
+async function runPhase14(): Promise<void> {
+  const HISTORY_CTX = 4096;
+  const KG_CTX = 32768;
+  const NUM_CTX = 40960;
+
+  console.log('\n🎯 PHASE 14: Improved validation scoring');
+  console.log('   Validation improvements:');
+  console.log('   1. Context-aware forbidden check — old values allowed in historical sentences');
+  console.log('      (e.g., "moved FROM Seattle" no longer fails when Seattle is forbidden)');
+  console.log('   2. OR-alias expected keywords — "math|maths|mathematics" passes on any variant');
+  console.log('   3. Pure-number word-boundary match — "5" no longer matches "51" or "2025"');
+  console.log('   4. Scenario keyword fixes — maths, teacher, passed, moved, applaunch, etc.');
+  console.log('   All other config identical to Phase 13 (Phase 10 best + all 6 improvements)');
+  console.log(`   Phase 13 baseline: 93.0%  |  Phase 10 baseline: 90.1%\n`);
+
+  const judgeConfig = { endpoint: DEFAULT_AGENT_CONFIG.ollamaEndpoint, model: DEFAULT_AGENT_CONFIG.model };
+  const runner = new TestRunner(true, judgeConfig);
+  const reporter = new MarkdownReporter(OUTPUT_DIR);
+
+  const config: RunConfig = {
+    memoryType: 'weighted',
+    graph: { ...DEFAULT_GRAPH_CONFIG, type: 'weighted', weightedEdges: true },
+    agent: {
+      ...DEFAULT_AGENT_CONFIG,
+      model: MODEL,
+      maxContextTokens: HISTORY_CTX,
+      maxKgTokens: KG_CTX,
+      numCtx: NUM_CTX,
+      timeoutMs: 120000,
+      embeddingModel: 'nomic-embed-text',
+    },
+    maxTurns: 60,
+    outputDir: OUTPUT_DIR,
+    runLabel: `weighted_phase14_h${HISTORY_CTX}_kg${KG_CTX}`,
+  };
+
+  const allScenarios = [...ALL_SCENARIOS, engineeringOrgDeepDive];
+  const result = await runner.runConfig(config, allScenarios);
+  const reportPath = reporter.writeRunReport(result);
+  console.log(`\n📄 Report written: ${reportPath}`);
+  console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% overall | recall=${(result.recallAccuracy * 100).toFixed(1)}% update=${(result.updateAccuracy * 100).toFixed(1)}% verify=${(result.verifyAccuracy * 100).toFixed(1)}%`);
+  console.log(`📊 Total turns: ${result.totalTurns} | avg latency: ${result.avgLatencyMs.toFixed(0)}ms`);
+  console.log(`\n📊 Phase 13 baseline: 93.0%  |  Phase 10 baseline: 90.1%`);
+  const delta13 = (result.overallAccuracy * 100 - 93.0).toFixed(1);
+  const delta10 = (result.overallAccuracy * 100 - 90.1).toFixed(1);
+  console.log(`📊 Delta vs Phase 13: ${Number(delta13) >= 0 ? '+' : ''}${delta13}%`);
+  console.log(`📊 Delta vs Phase 10: ${Number(delta10) >= 0 ? '+' : ''}${delta10}%`);
 }
 
 async function runPhase11(): Promise<void> {
@@ -537,6 +587,9 @@ async function main(): Promise<void> {
       break;
     case 'phase13':
       await runPhase13();
+      break;
+    case 'phase14':
+      await runPhase14();
       break;
     case 'single':
     default:

@@ -30,7 +30,7 @@ export class OllamaClient {
 
   constructor(config: OllamaClientConfig) {
     this.config = {
-      temperature: 0.3,
+      temperature: 0,
       timeoutMs: 120000,
       numCtx: 4096,
       ...config,

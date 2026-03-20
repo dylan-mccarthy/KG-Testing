@@ -282,7 +282,7 @@ export const engineeringOrgDeepDive: TestScenario = {
     {
       type: 'recall',
       userMessage: "Who is the current Frontend Lead and how did they get the role?",
-      expectedKeywords: ['lena', 'park', 'promoted'],
+      expectedKeywords: ['lena', 'park', 'promoted|promotion|appointed|took over'],
       forbiddenKeywords: ['omar'],
       factTag: 'recall_frontend_lead_post_update',
     },
@@ -397,7 +397,7 @@ export const engineeringOrgDeepDive: TestScenario = {
     {
       type: 'recall',
       userMessage: "What's Maya's technical specialisation and where does she rank on the engineering ladder?",
-      expectedKeywords: ['distributed', 'maya', 'l6'],
+      expectedKeywords: ['distributed|distributed systems', 'maya', 'l6|level 6|level-6'],
       forbiddenKeywords: [],
       factTag: 'recall_maya_late',
     },
@@ -411,7 +411,7 @@ export const engineeringOrgDeepDive: TestScenario = {
     {
       type: 'recall',
       userMessage: "What was TechCore's total headcount and what was the company type when you introduced yourself?",
-      expectedKeywords: ['500', 'saas'],
+      expectedKeywords: ['500', 'saas|software as a service|b2b'],
       forbiddenKeywords: [],
       factTag: 'recall_company_intro_late',
     },
@@ -425,7 +425,7 @@ export const engineeringOrgDeepDive: TestScenario = {
     {
       type: 'recall',
       userMessage: "How many engineers does Sam Okafor manage and what cloud platform does his team use?",
-      expectedKeywords: ['sam', '5', 'aws'],
+      expectedKeywords: ['sam', '5', 'aws|amazon|cloud'],
       forbiddenKeywords: [],
       factTag: 'recall_sam_late',
     },

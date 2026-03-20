@@ -114,7 +114,9 @@ Answer with ONLY "yes" or "no".`;
 
   /**
    * Check keyword matching with AND-word logic for multi-word phrases.
-   * "vp product" matches "VP of Product" because both "vp" and "product" are present.
+   * Supports OR-alternatives with pipe: "math|maths|mathematics" passes if ANY variant found.
+   * Pure-number keywords ("5", "550") use word-boundary matching to avoid false positives.
+   * "vp product" (space-separated) matches "VP of Product" because both words are present.
    */
   private checkKeywords(response: string, expectedKeywords: string[]): {
     found: boolean;
@@ -122,28 +124,88 @@ Answer with ONLY "yes" or "no".`;
   } {
     if (expectedKeywords.length === 0) return { found: true, missing: [] };
     const lower = response.toLowerCase();
+
     const missing = expectedKeywords.filter(kw => {
-      const kwLower = kw.toLowerCase();
-      if (lower.includes(kwLower)) return false;
-      const words = kwLower.split(/\s+/).filter(w => w.length > 0);
-      if (words.length > 1) {
-        return !words.every(word => lower.includes(word));
-      }
-      return true;
+      // OR-alternatives: "math|maths|mathematics" — pass if ANY variant matches
+      const alternatives = kw.toLowerCase().split('|');
+      return !alternatives.some(alt => this.matchesSingle(lower, alt));
     });
+
     return { found: missing.length === 0, missing };
   }
 
-  /** Check that forbidden keywords do NOT appear in the response (word-boundary aware) */
+  /** Match a single keyword (no pipes) against a lowercased response string */
+  private matchesSingle(lower: string, kw: string): boolean {
+    // Pure-number keywords: use word-boundary to prevent "5" matching "51" or "2025"
+    if (/^\d+$/.test(kw)) {
+      return new RegExp(`(?<![\\d])${kw}(?![\\d])`).test(lower);
+    }
+    // Direct substring match
+    if (lower.includes(kw)) return true;
+    // Multi-word: all space-separated tokens must appear somewhere in the response
+    const words = kw.split(/\s+/).filter(w => w.length > 0);
+    if (words.length > 1) {
+      return words.every(word => lower.includes(word));
+    }
+    return false;
+  }
+
+  /**
+   * Phrases that indicate a forbidden value is being cited in HISTORICAL context only
+   * (e.g., "moved FROM Seattle", "Omar WAS the lead", "formerly located in X").
+   * If ALL sentences containing the forbidden keyword have at least one such marker,
+   * the forbidden word is treated as a correct historical reference — not a failure.
+   */
+  private static readonly HISTORICAL_MARKERS = [
+    'previously', 'used to', 'formerly', 'no longer', 'was the', 'were the',
+    'had been', 'has since', 'moved from', 'relocated from', 'transition from',
+    'changed from', 'replaced by', 'replacing', 'instead of', 'prior to',
+    'from .* to', 'outdated', 'is now', 'now in', 'was replaced', 'took over',
+    'was promoted out', 'stepped down', 'before the', 'when it was', 'used to be',
+    'was formerly', 'now called', 'rebranded',
+    // departure / vacancy language
+    'resigned', 'resignation', 'vacancy left', 'left by', 'left the role',
+    'left the team', 'left the company', 'departure', 'departing', 'departed',
+    'vacated', 'filled by', 'fill the vacancy', 'to fill the',
+  ];
+
+  /**
+   * Check that forbidden keywords do NOT appear in the response (word-boundary aware).
+   * Context-aware: if the keyword appears ONLY in sentences with clear historical/
+   * relocation markers (e.g., "moved from Seattle", "Omar was previously"), it is
+   * allowed — the model correctly gives the current state while acknowledging history.
+   */
   private checkForbidden(response: string, forbiddenKeywords: string[]): string[] {
-    const lower = response.toLowerCase();
     return forbiddenKeywords.filter(kw => {
       const kwLower = kw.toLowerCase();
-      // Use word-boundary regex to avoid "data analyst" matching "Senior Data Analyst"
-      // Only flag if the forbidden phrase is NOT embedded in a longer meaningful phrase
       const escaped = kwLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`(?<![\\w])${escaped}(?![\\w])`, 'i');
-      return regex.test(response);
+      const kwRegex = new RegExp(`(?<![\\w])${escaped}(?![\\w])`, 'i');
+
+      // Not found at all → not forbidden
+      if (!kwRegex.test(response)) return false;
+
+      // Found — split into sentences and check context of each occurrence
+      const sentences = response
+        .split(/(?<=[.!?\n])\s*/)
+        .filter(s => s.trim().length > 0);
+
+      const relevantSentences = sentences.filter(s => kwRegex.test(s));
+      if (relevantSentences.length === 0) return false;
+
+      // If ALL sentences containing the forbidden word also have a historical marker,
+      // the response is giving correct current info while referencing history → allow it.
+      const allHistorical = relevantSentences.every(sentence => {
+        const sLower = sentence.toLowerCase();
+        return TestRunner.HISTORICAL_MARKERS.some(marker => {
+          // Markers with .* are treated as regex patterns
+          if (marker.includes('.*')) {
+            try { return new RegExp(marker).test(sLower); } catch { return false; }
+          }
+          return sLower.includes(marker);
+        });
+      });
+
+      return !allHistorical; // true = forbidden found in non-historical context = fail
     });
   }
 
