@@ -35,7 +35,7 @@ async function checkOllama(model = MODEL): Promise<boolean> {
 }
 
 function parseArgs(): {
-  mode: 'quick' | 'single' | 'research' | 'phase5' | 'phase6' | 'phase7' | 'phase8' | 'phase9' | 'phase10' | 'phase11' | 'phase12' | 'phase13' | 'phase14';
+  mode: 'quick' | 'single' | 'research' | 'phase5' | 'phase6' | 'phase7' | 'phase8' | 'phase9' | 'phase10' | 'phase11' | 'phase12' | 'phase13' | 'phase14' | 'phase15';
   graphType?: GraphType;
   contextTokens?: number;
   scenarioId?: string;
@@ -62,6 +62,7 @@ function parseArgs(): {
   if (flags['phase12'] === 'true') return { mode: 'phase12', model: flags['model'] };
   if (flags['phase13'] === 'true') return { mode: 'phase13' };
   if (flags['phase14'] === 'true') return { mode: 'phase14' };
+  if (flags['phase15'] === 'true') return { mode: 'phase15' };
 
   return {
     mode: 'single',
@@ -254,6 +255,63 @@ async function runPhase14(): Promise<void> {
   const delta13 = (result.overallAccuracy * 100 - 93.0).toFixed(1);
   const delta10 = (result.overallAccuracy * 100 - 90.1).toFixed(1);
   console.log(`📊 Delta vs Phase 13: ${Number(delta13) >= 0 ? '+' : ''}${delta13}%`);
+  console.log(`📊 Delta vs Phase 10: ${Number(delta10) >= 0 ? '+' : ''}${delta10}%`);
+}
+
+async function runPhase15(): Promise<void> {
+  const HISTORY_CTX = 4096;
+  const KG_CTX = 32768;
+  const NUM_CTX = 40960;
+
+  console.log('\n🚀 PHASE 15: NLP-Enhanced Validation + KG Pre-Processing');
+  console.log('   Part A — NLP Validation (harness):');
+  console.log('     • Tier 1: Porter stemmer  — word-form variants (teacher/teaching/teach)');
+  console.log('     • Tier 2: Persona pronoun — "You are X" counts as persona name');
+  console.log('     • Tier 3: Embedding cosine similarity ≥ 0.72 (nomic-embed-text)');
+  console.log('     • Tier 4: LLM judge (last resort, as before)');
+  console.log('   Part B — KG Pre-Processing (extractor):');
+  console.log('     • Intent classification: introduce/elaborate/update/background/confirm');
+  console.log('     • Entity pre-annotation: protected props guard (role/company/location)');
+  console.log('     • Explicit update detection: "budget is now $X (was $Y)" → force-update');
+  console.log('     • Regex supplement: pets, projects, language levels');
+  console.log('     • Background guard: past-tense sentences → past_role/past_company attrs');
+  console.log(`   Phase 14 baseline: 93.0%  |  Phase 10 baseline: 90.1%\n`);
+
+  const embeddingsClient = new (await import('./rag')).EmbeddingsClient({
+    endpoint: DEFAULT_AGENT_CONFIG.ollamaEndpoint,
+    model: 'nomic-embed-text',
+  });
+  const judgeConfig = { endpoint: DEFAULT_AGENT_CONFIG.ollamaEndpoint, model: DEFAULT_AGENT_CONFIG.model };
+  const runner = new TestRunner(true, judgeConfig, embeddingsClient);
+  const reporter = new MarkdownReporter(OUTPUT_DIR);
+
+  const config: RunConfig = {
+    memoryType: 'weighted',
+    graph: { ...DEFAULT_GRAPH_CONFIG, type: 'weighted', weightedEdges: true },
+    agent: {
+      ...DEFAULT_AGENT_CONFIG,
+      model: MODEL,
+      maxContextTokens: HISTORY_CTX,
+      maxKgTokens: KG_CTX,
+      numCtx: NUM_CTX,
+      timeoutMs: 120000,
+      embeddingModel: 'nomic-embed-text',
+    },
+    maxTurns: 60,
+    outputDir: OUTPUT_DIR,
+    runLabel: `weighted_phase15_h${HISTORY_CTX}_kg${KG_CTX}`,
+  };
+
+  const allScenarios = [...ALL_SCENARIOS, engineeringOrgDeepDive];
+  const result = await runner.runConfig(config, allScenarios);
+  const reportPath = reporter.writeRunReport(result);
+  console.log(`\n📄 Report written: ${reportPath}`);
+  console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% overall | recall=${(result.recallAccuracy * 100).toFixed(1)}% update=${(result.updateAccuracy * 100).toFixed(1)}% verify=${(result.verifyAccuracy * 100).toFixed(1)}%`);
+  console.log(`📊 Total turns: ${result.totalTurns} | avg latency: ${result.avgLatencyMs.toFixed(0)}ms`);
+  console.log(`\n📊 Phase 14 baseline: 93.0%  |  Phase 10 baseline: 90.1%`);
+  const delta14 = (result.overallAccuracy * 100 - 93.0).toFixed(1);
+  const delta10 = (result.overallAccuracy * 100 - 90.1).toFixed(1);
+  console.log(`📊 Delta vs Phase 14: ${Number(delta14) >= 0 ? '+' : ''}${delta14}%`);
   console.log(`📊 Delta vs Phase 10: ${Number(delta10) >= 0 ? '+' : ''}${delta10}%`);
 }
 
@@ -590,6 +648,9 @@ async function main(): Promise<void> {
       break;
     case 'phase14':
       await runPhase14();
+      break;
+    case 'phase15':
+      await runPhase15();
       break;
     case 'single':
     default:

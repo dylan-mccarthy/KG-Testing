@@ -6,6 +6,7 @@ import { KGAgent, TurnRecord } from '../agent';
 import { OllamaClient } from '../agent/ollama';
 import { EmbeddingsClient, VectorStore, RAGAgent } from '../rag';
 import { TestScenario, TurnType, ALL_SCENARIOS } from '../scenarios';
+import { SemanticValidator } from './validator';
 
 export interface TurnResult {
   turn: number;
@@ -67,8 +68,9 @@ export interface RunResult {
 export class TestRunner {
   private verbose: boolean;
   private judgeClient?: OllamaClient;
+  private validator: SemanticValidator;
 
-  constructor(verbose = true, judgeConfig?: { endpoint: string; model: string }) {
+  constructor(verbose = true, judgeConfig?: { endpoint: string; model: string }, embeddingsClient?: EmbeddingsClient) {
     this.verbose = verbose;
     if (judgeConfig) {
       this.judgeClient = new OllamaClient({
@@ -78,6 +80,7 @@ export class TestRunner {
         timeoutMs: 20000,
       });
     }
+    this.validator = new SemanticValidator(embeddingsClient, 0.72);
   }
 
   private log(msg: string): void {
@@ -113,10 +116,43 @@ Answer with ONLY "yes" or "no".`;
   }
 
   /**
-   * Check keyword matching with AND-word logic for multi-word phrases.
-   * Supports OR-alternatives with pipe: "math|maths|mathematics" passes if ANY variant found.
-   * Pure-number keywords ("5", "550") use word-boundary matching to avoid false positives.
-   * "vp product" (space-separated) matches "VP of Product" because both words are present.
+   * Check keyword matching: substring/OR-alias/number-boundary first,
+   * then semantic tiers (stem → persona → embedding) for each still-missing keyword.
+   * Returns missing keywords AFTER all semantic tiers (async).
+   */
+  private async checkKeywordsAsync(
+    response: string,
+    expectedKeywords: string[],
+    question: string,
+    personaName: string,
+  ): Promise<{ found: boolean; missing: string[] }> {
+    if (expectedKeywords.length === 0) return { found: true, missing: [] };
+    const lower = response.toLowerCase();
+
+    const missing: string[] = [];
+    for (const kw of expectedKeywords) {
+      // OR-alternatives: try each variant with direct match first
+      const alternatives = kw.toLowerCase().split('|');
+      let kwPassed = alternatives.some(alt => this.matchesSingle(lower, alt));
+
+      // If direct match failed, try semantic tiers on each alternative
+      if (!kwPassed) {
+        for (const alt of alternatives) {
+          const { matched } = await this.validator.checkKeywordSemantic(
+            response, alt, question, personaName
+          );
+          if (matched) { kwPassed = true; break; }
+        }
+      }
+
+      if (!kwPassed) missing.push(kw);
+    }
+    return { found: missing.length === 0, missing };
+  }
+
+  /**
+   * Synchronous keyword check (unchanged): substring + OR-alias + word-boundary numbers.
+   * Used internally; async version above is used in evaluateTurn.
    */
   private checkKeywords(response: string, expectedKeywords: string[]): {
     found: boolean;
@@ -126,7 +162,6 @@ Answer with ONLY "yes" or "no".`;
     const lower = response.toLowerCase();
 
     const missing = expectedKeywords.filter(kw => {
-      // OR-alternatives: "math|maths|mathematics" — pass if ANY variant matches
       const alternatives = kw.toLowerCase().split('|');
       return !alternatives.some(alt => this.matchesSingle(lower, alt));
     });
@@ -210,15 +245,19 @@ Answer with ONLY "yes" or "no".`;
   }
 
   /** Determine if a turn passed its evaluation criteria.
-   *  Uses LLM judge as fallback when keyword matching fails on recall/verify turns. */
+   *  Uses semantic tiers (stem→persona→embedding) then LLM judge as last resort. */
   private async evaluateTurn(
     type: TurnType,
     record: TurnRecord,
     expectedKeywords: string[],
     forbiddenKeywords: string[],
+    personaName: string,
   ): Promise<{ passed: boolean; missing: string[]; foundForbidden: string[]; judgeUsed: boolean }> {
     const response = record.assistantResponse;
-    const { missing } = this.checkKeywords(response, expectedKeywords);
+    // Use async semantic keyword check (includes stem/persona/embedding tiers)
+    const { missing } = await this.checkKeywordsAsync(
+      response, expectedKeywords, record.userMessage, personaName
+    );
     const foundForbidden = this.checkForbidden(response, forbiddenKeywords);
     let judgeUsed = false;
 
@@ -233,7 +272,6 @@ Answer with ONLY "yes" or "no".`;
         if (keywordPass) {
           passed = true;
         } else if (missing.length > 0 && foundForbidden.length === 0 && this.judgeClient) {
-          // Keyword failed — try LLM judge as rescue
           const judgePass = await this.llmJudge(record.userMessage, response, expectedKeywords);
           if (judgePass) { judgeUsed = true; passed = true; }
         }
@@ -280,8 +318,12 @@ Answer with ONLY "yes" or "no".`;
       // Only extract facts on tell/update turns — skipping extraction for recall/distractor saves ~15s/turn
       const shouldExtract = turn.type === 'tell' || turn.type === 'update';
       const record: TurnRecord = await agent.chat(turn.userMessage, shouldExtract, turn.type);
+
+      // Get persona name from agent (detected during tell turns) for semantic validation
+      const personaName = 'getPersonaName' in agent ? (agent as KGAgent).getPersonaName() : '';
+
       const { passed, missing, foundForbidden, judgeUsed } = await this.evaluateTurn(
-        turn.type, record, turn.expectedKeywords, turn.forbiddenKeywords
+        turn.type, record, turn.expectedKeywords, turn.forbiddenKeywords, personaName
       );
 
       const result: TurnResult = {

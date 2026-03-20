@@ -3,6 +3,7 @@
 import { OllamaClient, ChatMessage } from './ollama';
 import { ContextManager } from './context';
 import { FactExtractor, ExtractionResult } from './extractor';
+import { MessagePreprocessor } from './preprocessor';
 import { IKnowledgeGraph, NodeData } from '../graphs';
 import { AgentConfig } from '../config';
 import { EmbeddingsClient } from '../rag';
@@ -55,10 +56,13 @@ export class KGAgent {
   private client: OllamaClient;
   private contextManager: ContextManager;
   private extractor: FactExtractor;
+  private preprocessor: MessagePreprocessor;
   private graph: IKnowledgeGraph;
   private config: AgentConfig;
   private history: ChatMessage[] = [];
   private session: AgentSession;
+  /** Conversation persona name (set from first tell turn) */
+  private personaName = '';
   /** Per-node embedding cache: nodeId → embedding vector */
   private nodeEmbeddings: Map<string, number[]> = new Map();
   private embeddingsClient?: EmbeddingsClient;
@@ -78,7 +82,8 @@ export class KGAgent {
       config.systemPrompt || DEFAULT_SYSTEM_PROMPT,
       config.maxKgTokens,
     );
-    this.extractor = new FactExtractor(this.client);
+    this.extractor   = new FactExtractor(this.client);
+    this.preprocessor = new MessagePreprocessor();
     // Initialise embeddings client if model is configured (enables hybrid retrieval)
     if (config.embeddingModel) {
       this.embeddingsClient = new EmbeddingsClient({
@@ -93,6 +98,9 @@ export class KGAgent {
       totalTokensUsed: 0,
     };
   }
+
+  /** Return the detected conversation persona name (set after first tell turn) */
+  getPersonaName(): string { return this.personaName; }
 
   /** Extract keywords from a user message for KG querying */
   private extractQueryTerms(message: string): string {
@@ -249,12 +257,31 @@ export class KGAgent {
     };
 
     try {
-      // Step 1: Extract facts from user message and store in KG
+      // Step 1: Pre-process message to classify intent, annotate entities, detect updates
       if (extractFacts) {
+        const preprocess = this.preprocessor.preprocess(userMessage, this.graph, this.personaName);
+
+        // Extract persona name from first tell turns if not yet set
+        if (!this.personaName && preprocess.supplementFacts.length > 0) {
+          const nameFact = preprocess.supplementFacts.find(f => f.attribute === 'name');
+          if (nameFact) this.personaName = nameFact.entity;
+        }
+
         const recentContext = this.history.slice(-4)
           .map(m => `${m.role}: ${m.content}`)
           .join('\n');
-        const facts = await this.extractor.extract(userMessage, recentContext);
+        const facts = await this.extractor.extract(userMessage, recentContext, {
+          extractionContext: preprocess.extractionContext,
+          supplementFacts:   preprocess.supplementFacts,
+          explicitUpdates:   preprocess.explicitUpdates,
+        });
+
+        // Also extract persona name from LLM facts if still unset
+        if (!this.personaName) {
+          const nameFact = facts.find(f => f.attribute === 'name');
+          if (nameFact) this.personaName = nameFact.entity;
+        }
+
         if (facts.length > 0) {
           const extraction = this.extractor.storeInGraph(facts, this.graph);
           record.extraction = extraction;

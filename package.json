@@ -10,11 +10,18 @@
     "test:quick": "ts-node src/index.ts --quick",
     "research": "ts-node src/index.ts --research"
   },
-  "keywords": ["knowledge-graph", "ai-agent", "ollama", "memory"],
+  "keywords": [
+    "knowledge-graph",
+    "ai-agent",
+    "ollama",
+    "memory"
+  ],
   "author": "dylan-mccarthy",
   "license": "MIT",
   "dependencies": {
     "axios": "^1.6.0",
+    "compromise": "^14.15.0",
+    "natural": "^8.1.1",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

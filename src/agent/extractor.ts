@@ -190,31 +190,73 @@ export class FactExtractor {
     this.client = client;
   }
 
-  async extract(userMessage: string, conversationContext: string = ''): Promise<ExtractedFact[]> {
-    const prompt = conversationContext
+  /**
+   * Extract facts from a user message.
+   * When preprocessContext is supplied (from MessagePreprocessor), it is injected
+   * into the LLM extraction prompt and supplement facts are merged into results.
+   */
+  async extract(
+    userMessage: string,
+    conversationContext: string = '',
+    preprocessContext?: {
+      extractionContext: string;
+      supplementFacts: Array<{ entity: string; attribute: string; value: string; isUpdate: boolean }>;
+      explicitUpdates: Array<{ entity: string; attribute: string; newValue: string; oldValue?: string }>;
+    },
+  ): Promise<ExtractedFact[]> {
+    // Build the user-facing prompt
+    let prompt = conversationContext
       ? `Context: ${conversationContext.slice(0, 300)}\nMessage: "${userMessage}"`
       : `"${userMessage}"`;
 
+    // Inject pre-processing context into the system instructions when available
+    const systemContent = preprocessContext?.extractionContext
+      ? `${EXTRACTION_SYSTEM}\n\n${preprocessContext.extractionContext}`
+      : EXTRACTION_SYSTEM;
+
+    let llmFacts: ExtractedFact[] = [];
     try {
       const response = await this.client.chat([
-        { role: 'system', content: EXTRACTION_SYSTEM },
+        { role: 'system', content: systemContent },
         { role: 'user', content: prompt },
       ], { temperature: 0.0, timeoutMs: 30000, noThink: true });
 
       const text = response.message?.content?.trim() || '[]';
       const jsonMatch = text.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) return regexExtract(userMessage);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]) as ExtractedFact[];
+        if (Array.isArray(parsed)) {
+          llmFacts = parsed.filter(f => f.entity && f.attribute && f.value);
+        }
+      }
+    } catch { /* fall through to supplements */ }
 
-      const parsed = JSON.parse(jsonMatch[0]) as ExtractedFact[];
-      if (!Array.isArray(parsed)) return regexExtract(userMessage);
-      const llmFacts = parsed.filter(f => f.entity && f.attribute && f.value);
+    // Regex fallback for greeting/intro messages when LLM returns nothing
+    if (llmFacts.length === 0) llmFacts = regexExtract(userMessage);
 
-      // If LLM returned nothing, try regex fallback for greeting/intro messages
-      if (llmFacts.length === 0) return regexExtract(userMessage);
-      return llmFacts;
-    } catch {
-      return regexExtract(userMessage);
+    // Merge supplement facts (background/regex-detected) — LLM wins on duplicates
+    const supplements: ExtractedFact[] = (preprocessContext?.supplementFacts ?? []).map(s => ({
+      entity: s.entity, attribute: s.attribute, value: s.value,
+      isUpdate: s.isUpdate, relatedEntity: undefined, relation: undefined,
+    }));
+
+    // Build explicit-update facts from preprocessor detections
+    // These are injected with isUpdate=true so storeInGraph() will update the node
+    const explicitFacts: ExtractedFact[] = (preprocessContext?.explicitUpdates ?? []).map(u => ({
+      entity: u.entity, attribute: u.attribute, value: u.newValue,
+      isUpdate: true, relatedEntity: undefined, relation: undefined,
+    }));
+
+    // Merge: start with LLM facts; add supplement/explicit only if not already covered
+    const merged = [...llmFacts];
+    const covered = (e: string, a: string) =>
+      merged.some(f => f.entity.toLowerCase() === e.toLowerCase() && f.attribute === a);
+
+    for (const f of [...supplements, ...explicitFacts]) {
+      if (!covered(f.entity, f.attribute)) merged.push(f);
     }
+
+    return merged;
   }
 
   /** Store extracted facts into the graph, handling updates to existing nodes */
