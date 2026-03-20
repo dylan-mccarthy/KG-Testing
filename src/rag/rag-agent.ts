@@ -13,7 +13,7 @@ export { TurnRecord, AgentSession };
 
 const RAG_SYSTEM_PROMPT = `You are a helpful AI assistant with access to a semantic memory system.
 When the user shares information about themselves or others, acknowledge it naturally and remember it.
-When answering questions, prioritize any retrieved memory facts provided to you.
+When answering questions, ALWAYS prioritise facts from the Memory section over anything in the conversation history — the Memory section reflects the CURRENT state of all known facts and may supersede earlier values.
 For general knowledge questions not covered by the memory facts, use your own knowledge.
 Be concise and accurate. Do not make up information about specific people or entities unless supported by the provided facts.`;
 

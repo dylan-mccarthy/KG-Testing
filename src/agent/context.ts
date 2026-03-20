@@ -64,7 +64,7 @@ export class ContextManager {
     const kgTokens = OllamaClient.estimateTokens(kgTruncated);
 
     const systemContent = kgTruncated
-      ? `${this.systemPromptBase}\n\n## Knowledge Graph Memory\nUse the following retrieved facts to answer accurately:\n${kgTruncated}`
+      ? `${this.systemPromptBase}\n\n## Knowledge Base (CURRENT STATE — supersedes conversation history)\nThe following facts are the most up-to-date known information. If any fact here differs from something said earlier in the conversation, THIS is correct:\n${kgTruncated}`
       : this.systemPromptBase;
 
     const sysMsg: ChatMessage = { role: 'system', content: systemContent };
@@ -105,7 +105,7 @@ export class ContextManager {
   ): ContextWindow {
     // Legacy: KG embedded in system, all compete for maxHistoryTokens
     const systemContent = kgMemory
-      ? `${this.systemPromptBase}\n\n## Knowledge Graph Memory\nUse the following retrieved facts to answer accurately:\n${kgMemory}`
+      ? `${this.systemPromptBase}\n\n## Knowledge Base (CURRENT STATE — supersedes conversation history)\nThe following facts are the most up-to-date known information. If any fact here differs from something said earlier in the conversation, THIS is correct:\n${kgMemory}`
       : this.systemPromptBase;
 
     const sysMsg: ChatMessage = { role: 'system', content: systemContent };
