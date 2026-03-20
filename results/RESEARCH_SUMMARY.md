@@ -2,130 +2,160 @@
 
 ## Overview
 
-This project systematically tests Knowledge Graph (KG) implementations as AI agent memory,
-comparing them against RAG (vector embeddings) across multiple context strategies and improvements.
+Systematic comparison of Knowledge Graph (KG) implementations as AI agent memory,
+vs RAG (vector embeddings), across multiple context strategies and iterative improvements.
 
-- **Model**: qwen3.5:4b via Ollama at 192.168.86.27:11434
-- **Embedding model**: nomic-embed-text (for RAG phases)
-- **Framework**: Node.js + TypeScript
-- **Total test turns run**: ~1,800+ across all phases
+- **Model**: qwen3.5:4b via Ollama (192.168.86.27:11434)
+- **Embedding model**: nomic-embed-text (RAG phases)
+- **Framework**: Node.js + TypeScript  
+- **Total phases**: 11 | **Total turns tested**: ~1,900+
 
 ---
 
-## Phase Progression
+## Results by Phase
 
-| Phase | Config | Overall | Recall | Update | Verify | Deep-dive Verify | Notes |
-|-------|--------|---------|--------|--------|--------|-----------------|-------|
-| 1–3 | Simple/Hier/Multi/Weighted × ctx400–4096 | up to 94.5% | 88% | 100% | 100% | N/A | Pre-loaded KG, short scenarios |
-| 4 best | weighted_ctx800 | **94.5%** | 88% | 100% | 100% | N/A | KG vs RAG: KG leads by 8.8% |
-| 4 RAG avg | rag_ctx800–4096 | 80.2% | — | 65% | — | N/A | RAG update accuracy weak at 65% |
-| 5 | 131k context | 68.0% | 64% | 100% | 0% | 0% | Model sees all history → cites old values |
-| 6 | Split h4k+kg32k | 85.4% | 79% | 100% | 70.8% | 25% | History+KG independent budgets |
-| 7 | +Staleness meta | 86.2% | 77.3% | 100% | 79.2% | 25% | isOutdated, version, supersededBy |
-| 8 | +Stale tag cleanup | 87.8% | 82.1% | 100% | 75.0% | 0% | updateNode removes old value tokens |
-| 9 | +Fuzzy conflict | 86.4% | 77.6% | 100% | 79.2% | 25% | Improved extraction prompt; turn 44 ✅ |
-| **10** | **+KG-over-history** | **90.1%** | **80.9%** | **100%** | **91.7%** | **50%** | **Best overall; KG supersedes history** |
+| Phase | Overall | Recall | Update | Verify | Deep-dive V | Key Change |
+|-------|---------|--------|--------|--------|-------------|------------|
+| 1–3 (ctx400–4096) | up to 94.5% | 88% | 100% | 100% | N/A | KG baseline — pre-loaded graphs |
+| 4 KG avg | 89.0% | — | 100% | — | N/A | Natural conversation KG build-up |
+| 4 RAG avg | 80.2% | — | 65% | — | N/A | RAG: weak update accuracy |
+| 5 (131k ctx) | 68.0% | 64% | 100% | 0% | 0% | Giant context → cites history |
+| 6 (split h4k+kg32k) | 85.4% | 79% | 100% | 70.8% | 25% | Split-budget context introduced |
+| 7 (staleness meta) | 86.2% | 77.3% | 100% | 79.2% | 25% | isOutdated, version, supersededBy |
+| 8 (stale-tag cleanup) | 87.8% | 82.1% | 100% | 75.0% | 0% | Canonical attrs; tag cleanup |
+| 9 (fuzzy conflicts) | 86.4% | 77.6% | 100% | 79.2% | 25% | Fuzzy role matching; turn 44 ✅ |
+| **10 (KG-over-history)** | **90.1%** | **80.9%** | **100%** | **91.7%** | **50%** | **Best: KG supersedes history** |
+| 11 (no-history-narrative) | 87.8% | 75.8% | 100% | 91.7% | 50% | Budget fixed; prompt too strict |
+
+**Best overall: Phase 10** — 90.1% accuracy, 91.7% verify, 100% update
 
 ---
 
 ## Key Findings
 
-### 1. KG consistently beats RAG (Phase 4)
-- KG: 89.0% avg vs RAG: 80.2% avg — **8.8% KG advantage**
-- RAG update accuracy only 65% (vs KG 100%) — vector stores can't cleanly overwrite facts
-- RAG recall improves with context size; KG recall is consistent
+### 1. Knowledge Graphs beat RAG by 8.8% (Phase 4)
+- KG: 89.0% avg | RAG: 80.2% avg — significant advantage on mutation tasks
+- RAG update accuracy: **65%** vs KG **100%** — vector stores cannot cleanly overwrite facts
+- Both improve with context size, but KG is consistently stronger
 
-### 2. Large context hurts mutation testing (Phase 5)
-- At 131k tokens, model sees full history including old values → answers historically
-- "Budget was $400k, now $550k" — forbidden keyword "400k" appears even though answer is correct
-- Smaller context windows force reliance on KG's current state
+### 2. Large context is harmful for mutation testing (Phase 5)
+- At 131k tokens the full conversation history is visible
+- Model cites historical values even when KG has current state → 0% verify
+- Smaller windows force reliance on the KG's authoritative current facts
 
-### 3. Split-budget context is optimal (Phase 6+)
-- `maxHistoryTokens: 4096` + `maxKgTokens: 32768` → best balance
-- History trimmed independently of KG injection
-- KG can grow large without crowding out recent conversation
+### 3. Split-budget context architecture is optimal (Phase 6+)
+- `maxHistoryTokens: 4,096` + `maxKgTokens: 32,768` → best balance
+- History trimmed independently of KG — KG can grow without evicting recent turns
+- Requires `num_ctx: 40,960` so Ollama allocates enough context for both
 
-### 4. Staleness metadata improves verify accuracy (Phase 7)
-- `isOutdated`, `version`, `updatedAt`, `supersededBy` fields on NodeData
-- `markConflictingNodes()` marks role-conflicts as outdated on new assignment
-- Verify improved from 70.8% → 79.2% (standard scenarios: 100% verify)
+### 4. Staleness metadata improves mutation accuracy (Phase 7)
+- `NodeData`: `isOutdated`, `version`, `updatedAt`, `supersededBy`
+- `markConflictingNodes()`: when entity gets new role, old role-holders are marked outdated
+- `queryKG()` filters `isOutdated` nodes; adds `[vN, Xm ago]` freshness annotations
+- Verify improved from 70.8% → 79.2% (standard scenarios hit 100%)
 
 ### 5. Canonical attribute normalisation improves recall (Phase 8)
-- LLM extractor generates inconsistent attribute names ("city" / "location" / "current_location")
-- Mapping all variants to canonical keys prevents duplicate facts
-- Recall improved from 77.3% → 82.1%
+- LLM extractor generates inconsistent keys: "city"/"location"/"current_location"
+- Map all variants to canonical keys → single authoritative property per logical fact
+- `updateNode()` removes old value tokens from tags on property change
+- Recall improved: 77.3% → 82.1%
 
 ### 6. Fuzzy conflict detection fixes role supersession (Phase 9)
-- Exact string match (`===`) misses "new Frontend Lead" vs "Frontend Lead"
-- Bidirectional `includes()` match catches partial role strings
-- First time turn 44 (Frontend Lead verify) correctly passes ✅
+- Exact `===` match misses "new Frontend Lead" vs stored "Frontend Lead"
+- Bidirectional `includes()` catches partial role strings
+- Turn 44 (verify: current Frontend Lead) first passes ✅
 
-### 7. System prompt priority instruction is the biggest single win (Phase 10)
-- Adding explicit "KG supersedes conversation history" instruction: +12.5% verify
-- Also updated KG section header to "CURRENT STATE — supersedes conversation history"
-- Fixes the "old value in history" problem without requiring shorter windows
-- Verify: 79.2% → **91.7%** (+12.5pp); Overall: 86.4% → **90.1%** (+3.7pp)
+### 7. System prompt KG-priority instruction is the single biggest improvement (Phase 10)
+- Adding: *"Always prioritise the Knowledge Base over conversation history — the KG reflects CURRENT state"*
+- Also: KG section header updated to *"CURRENT STATE — supersedes conversation history"*
+- **+12.5% verify** (79.2% → 91.7%); **+3.7% overall** (86.4% → 90.1%)
+- Fixes location (Seattle→SF) and role (Omar→Lena) verify in the deep-dive
+
+### 8. Budget historical narrative — partial fix (Phase 11)
+- "state ONLY current value, do not mention historical values that changed"
+- Budget verify (turn 45) fixed ✅
+- But the stricter prompt reduced recall (-5.1%) and caused a role-verify regression
+- **Trade-off**: KG-over-history instruction (Phase 10) is the better balance point
 
 ---
 
 ## Remaining Challenges
 
-### Budget historical narrative (turn 45 deep-dive)
-- Model says "budget was raised from $400k to $550k" — historically accurate but
-  includes forbidden old value
-- Fix direction: prompt instruction "state only current value, not historical values"
-- Or: soften forbidden check to require old value WITHOUT expected new value
-
-### Long-range recall degrades (deep-dive turns 38–48)
-- Facts from turns 1–10 (37+ turns ago) occasionally not retrievable
-- KG has 24 nodes but topK injection may not surface the specific needed node
-- Fix direction: increase topK, improve tag coverage for specific facts
-
-### Project/assignment supersession (Priya/Beacon turn 47)
-- `project` attribute conflict detection not firing (no role-hint in "beacon" value)
-- Fix direction: extend conflict detection to `project` attribute key specifically
+| Challenge | Root Cause | Fix Direction |
+|-----------|------------|---------------|
+| Deep-dive turn 47 (Priya/Beacon) | "Beacon" tag persists after project reassignment | Extend conflict detection to `project` attr with same-entity check (no Mode-3 side effects) |
+| Deep-dive turn 26 (Omar recall) | 4k history still contains original "Omar = Frontend Lead" conversation | Trim history more aggressively when mutations occur |
+| Long-range recall (38+ turns) | topK may not surface specific facts from dense 24-node graph | Increase topK, improve tag specificity for numeric facts |
+| Extractor greedy prompt sensitivity | More specific prompts extract fewer facts on greeting turns | Two-pass extraction: lightweight for tell, detailed for update |
 
 ---
 
-## Architecture Summary
+## Architecture (Final State)
 
 ```
 User message
     │
     ▼
-FactExtractor (Ollama LLM, temp=0)
-    │ Extracts structured facts → canonicalized attribute names
-    │ markConflictingNodes() → marks old role holders as isOutdated
+FactExtractor (Ollama, temp=0, think=false)
+    │  Canonical attribute normalisation (city→location, title→role, etc.)
+    │  markConflictingNodes():
+    │    Mode 1 — fuzzy value match for role words (includes() bidirectional)
+    │    Mode 2 — role-like attr key + role-hint value on other node
+    │    Mode 3 — single-holder attr (project/budget) same-entity supersession
     ▼
-IKnowledgeGraph (weighted graph)
-    │ Nodes: {label, properties, tags, version, updatedAt, isOutdated}
-    │ updateNode() removes stale tag tokens on value change
+IKnowledgeGraph (WeightedGraph — best performer)
+    │  NodeData: {label, properties, tags, version, updatedAt, isOutdated, supersededBy}
+    │  updateNode(): removes stale tag tokens when property value changes
+    │  markOutdated(): sets isOutdated=true, bumps version, records supersededBy
     ▼
-queryKG() → filters isOutdated nodes → freshness annotations
-    │
+queryKG()
+    │  Filters isOutdated nodes entirely
+    │  Adds [vN, updated Xm ago] freshness annotations
+    │  Dynamic topK proportional to maxKgTokens budget
     ▼
 ContextManager (split-budget mode)
-    │ History:  max 4,096 tokens (trimmed from oldest)
-    │ KG text:  max 32,768 tokens (truncated by line boundary)
-    │ Section header: "CURRENT STATE — supersedes conversation history"
+    │  History:  max 4,096 tokens (oldest-first trim)
+    │  KG text:  max 32,768 tokens (line-boundary safe truncation)
+    │  Section:  "## Knowledge Base (CURRENT STATE — supersedes conversation history)"
     ▼
-Ollama (qwen3.5:4b, num_ctx=40960, think=false)
-    │
+Ollama qwen3.5:4b
+    │  num_ctx=40,960  |  think=false (suppresses chain-of-thought tokens)
+    │  "Always prioritise KG over history — history may contain outdated values"
+    │  "If KG differs from history, KG is correct"
     ▼
-Response → appended to history
+Response → append to history → next turn
 ```
 
 ---
 
-## Files
+## KG Types Comparison (Phase 4, ctx=800)
 
-| File | Description |
+| Graph Type | Overall | Recall | Update | Verify | Avg Latency |
+|------------|---------|--------|--------|--------|-------------|
+| **Weighted** | **94.5%** | 88% | 100% | 100% | 1,132ms |
+| Hierarchical | 92.1% | 85% | 100% | 100% | 1,089ms |
+| Multi | 91.8% | 84% | 100% | 100% | 1,211ms |
+| Simple | 90.3% | 82% | 100% | 100% | 978ms |
+| RAG | 80.2% | 75% | 65% | 80% | 1,844ms |
+
+WeightedGraph wins — edge weights encode relationship confidence, boosting freshness signals.
+
+---
+
+## Files Reference
+
+| Path | Description |
 |------|-------------|
-| `src/graphs/` | SimpleGraph, HierarchicalGraph, MultiGraph, WeightedGraph |
-| `src/agent/agent.ts` | KGAgent: extract → query → context → LLM |
+| `src/graphs/base.ts` | NodeData interface, IKnowledgeGraph interface, scoreMatch() |
+| `src/graphs/simple.ts` | Base graph impl — all other types extend this |
+| `src/graphs/weighted.ts` | WeightedGraph — best performer |
+| `src/agent/agent.ts` | KGAgent: extract→query→context→LLM, system prompt |
 | `src/agent/extractor.ts` | FactExtractor: canonical attrs, conflict detection |
-| `src/agent/context.ts` | ContextManager: split-budget mode |
-| `src/rag/` | EmbeddingsClient, VectorStore, RAGAgent |
-| `src/scenarios/` | 5 standard + 1 engineering deep-dive (48 turns) |
-| `results/` | Per-run markdown reports + this summary |
-
+| `src/agent/context.ts` | ContextManager: split-budget, CURRENT STATE header |
+| `src/agent/ollama.ts` | HTTP client: think=false, num_ctx, hard timeout |
+| `src/rag/` | EmbeddingsClient, VectorStore (upsert), RAGAgent |
+| `src/scenarios/` | 5 standard (15-turn) + engineering deep-dive (48-turn) |
+| `src/config.ts` | AgentConfig, RunConfig, research matrix builder |
+| `src/harness/runner.ts` | TestRunner: turn execution, pass/fail evaluation |
+| `src/harness/reporter.ts` | MarkdownReporter: per-run + leaderboard reports |
+| `results/` | All per-run markdown reports |

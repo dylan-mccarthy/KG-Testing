@@ -35,7 +35,7 @@ async function checkOllama(): Promise<boolean> {
 }
 
 function parseArgs(): {
-  mode: 'quick' | 'single' | 'research' | 'phase5' | 'phase6' | 'phase7' | 'phase8' | 'phase9' | 'phase10';
+  mode: 'quick' | 'single' | 'research' | 'phase5' | 'phase6' | 'phase7' | 'phase8' | 'phase9' | 'phase10' | 'phase11';
   graphType?: GraphType;
   contextTokens?: number;
   scenarioId?: string;
@@ -57,6 +57,7 @@ function parseArgs(): {
   if (flags['phase8'] === 'true') return { mode: 'phase8' };
   if (flags['phase9'] === 'true') return { mode: 'phase9' };
   if (flags['phase10'] === 'true') return { mode: 'phase10' };
+  if (flags['phase11'] === 'true') return { mode: 'phase11' };
 
   return {
     mode: 'single',
@@ -110,6 +111,41 @@ async function runSingle(graphType: GraphType, contextTokens: number, scenarioId
 
   // @ts-ignore - filtered above
   const result = await runner.runConfig(config, scenarios);
+  const reportPath = reporter.writeRunReport(result);
+  console.log(`\n📄 Report written: ${reportPath}`);
+  console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
+}
+
+async function runPhase11(): Promise<void> {
+  const HISTORY_CTX = 4096;
+  const KG_CTX = 32768;
+  const NUM_CTX = 40960;
+
+  console.log('\n🏁 PHASE 11: No-historical-narrative prompt + project/budget conflict detection');
+  console.log(`   Prompt: "state ONLY current value, not historical values that changed"`);
+  console.log(`   Conflict detection: project/budget/location single-holder attr supersession`);
+  console.log(`   History: ${HISTORY_CTX.toLocaleString()}t  |  KG: ${KG_CTX.toLocaleString()}t  |  num_ctx: ${NUM_CTX.toLocaleString()}t\n`);
+
+  const runner = new TestRunner(true);
+  const reporter = new MarkdownReporter(OUTPUT_DIR);
+
+  const config: RunConfig = {
+    memoryType: 'weighted',
+    graph: { ...DEFAULT_GRAPH_CONFIG, type: 'weighted', weightedEdges: true },
+    agent: {
+      ...DEFAULT_AGENT_CONFIG,
+      maxContextTokens: HISTORY_CTX,
+      maxKgTokens: KG_CTX,
+      numCtx: NUM_CTX,
+      timeoutMs: 120000,
+    },
+    maxTurns: 60,
+    outputDir: OUTPUT_DIR,
+    runLabel: `weighted_phase11_h${HISTORY_CTX}_kg${KG_CTX}`,
+  };
+
+  const allScenarios = [...ALL_SCENARIOS, engineeringOrgDeepDive];
+  const result = await runner.runConfig(config, allScenarios);
   const reportPath = reporter.writeRunReport(result);
   console.log(`\n📄 Report written: ${reportPath}`);
   console.log(`\n📊 Final: ${(result.overallAccuracy * 100).toFixed(1)}% accuracy across ${result.totalTurns} turns`);
@@ -402,6 +438,9 @@ async function main(): Promise<void> {
       break;
     case 'phase10':
       await runPhase10();
+      break;
+    case 'phase11':
+      await runPhase11();
       break;
     case 'single':
     default:

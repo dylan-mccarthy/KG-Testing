@@ -224,15 +224,14 @@ export class FactExtractor {
    * When a new fact assigns a role/title/lead/position to an entity, scan ALL
    * other (non-outdated) nodes for a conflicting value and mark them outdated.
    *
-   * Three detection modes:
-   *  1. VALUE fuzzy: fact.value contains/is-contained-by a role word →
+   * Detection modes:
+   *  1. VALUE fuzzy (role): fact.value contains a role word →
    *     find nodes whose property VALUE overlaps with this role string → mark outdated.
-   *  2. ATTR-key: fact.attribute is a role-like key (e.g. "role", "lead") →
-   *     find any OTHER node with the same attribute key → mark outdated.
-   *  3. ENTITY-LOCATION/PROJECT: for "location" and "project" attributes,
-   *     if the same entity node already has a different value for that canonical key,
-   *     the updateNode() call already overwrote it — no extra action needed.
-   *     BUT if the LLM stored a SEPARATE "location" node that is now stale, mark it.
+   *  2. ATTR-key (role): fact.attribute is role-like ("role"/"title") →
+   *     find any OTHER node with the same attribute key that has a role-hint value.
+   *  3. ENTITY-SCOPED (project/budget/location): when the canonical attribute is one of
+   *     these single-holder keys AND the entity already has a DIFFERENT value for it in
+   *     another node, mark that other node as outdated (superseded by current entity node).
    */
   private markConflictingNodes(fact: ExtractedFact, entityNode: NodeData, graph: IKnowledgeGraph): void {
     const val  = String(fact.value).toLowerCase().trim();
@@ -245,7 +244,13 @@ export class FactExtractor {
     const isRoleValue = roleHints.some(h => val.includes(h));
     const isRoleAttr  = roleHints.some(h => attr.includes(h)) || attr === 'role' || attr === 'title';
 
-    if (!isRoleValue && !isRoleAttr) return;
+    // Single-holder attributes: only ONE node per entity should hold the current value.
+    // When a new value arrives for these, find any other node with the same attr but different
+    // (old) value and mark it outdated so stale data doesn't leak into KG injection.
+    const singleHolderAttrs = new Set(['project', 'budget', 'location', 'role', 'title', 'level']);
+    const isSingleHolder = singleHolderAttrs.has(attr);
+
+    if (!isRoleValue && !isRoleAttr && !isSingleHolder) return;
 
     for (const node of graph.getAllNodes()) {
       if (node.id === entityNode.id || node.isOutdated) continue;
@@ -255,15 +260,20 @@ export class FactExtractor {
         const pk = String(propKey).toLowerCase();
         const pv = String(propVal).toLowerCase().trim();
 
-        // Mode 1 — fuzzy value match (handles "Frontend Lead" ≈ "new Frontend Lead")
+        // Mode 1 — fuzzy value match for role words
         if (isRoleValue && (pv === val || pv.includes(val) || val.includes(pv))) {
           conflict = true; break;
         }
 
-        // Mode 2 — same role-like attribute key on a different node
+        // Mode 2 — same role-like attribute key on a different node with a role-hint value
         if (isRoleAttr && (pk === attr || pk === 'role' || pk === 'title')) {
-          // Only conflict if the OTHER node has a role value that overlaps this one
           if (roleHints.some(h => pv.includes(h))) { conflict = true; break; }
+        }
+
+        // Mode 3 — same entity's single-holder attribute with an OLD (different) value
+        // Only applies when the other node shares the same entity label (same person/project)
+        if (isSingleHolder && pk === attr && pv !== val) {
+          if (this.isSameEntity(node.label, entityNode.label)) { conflict = true; break; }
         }
       }
 
